@@ -3,11 +3,28 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserPermissionController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 
 // Public route
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/deploy/fix', function () {
+    // Run all the common post-deploy commands
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('config:cache');
+    Artisan::call('route:cache');
+    Artisan::call('view:cache');
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'All artisan commands executed!'
+    ]);
+});
 
 // Group all routes that require a valid token
 Route::middleware('auth:sanctum')->group(function () {
