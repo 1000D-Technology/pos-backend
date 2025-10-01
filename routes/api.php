@@ -9,7 +9,14 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 
-// Public route
+// Public routes
+Route::get('/login', function () {
+    return response()->json([
+        'message' => 'Unauthorized',
+        'error' => 'Authentication required.'
+    ], 401);
+})->name('login');
+
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/deploy/fix', function () {
@@ -35,7 +42,6 @@ Route::get('/deploy/fix', function () {
 Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/user', fn(Request $request) => $request->user());
-    
 
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');  
     Route::get('/users/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
@@ -43,9 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/users/{user}/permissions', [UserPermissionController::class, 'index'])->middleware('permission:users.view');
     Route::post('/users/{user}/permissions', [UserPermissionController::class, 'sync'])->middleware('permission:users.manage-permissions');
-   
-    
 
+   
 
     // --- POS Product Routes ---
     Route::get('/products', function () {
