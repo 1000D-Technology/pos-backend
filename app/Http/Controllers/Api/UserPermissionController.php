@@ -9,6 +9,16 @@ use Illuminate\Http\Request;
 
 class UserPermissionController extends Controller
 {
+
+    public function index(User $user)
+    {
+        return response()->json([
+            'user' => $user->name,
+            'permissions' => $user->permissions->pluck('slug') // Return only the slugs of the permissions
+        ]);
+    }
+
+
  public function sync(Request $request, User $user)
     {
         $request->validate([

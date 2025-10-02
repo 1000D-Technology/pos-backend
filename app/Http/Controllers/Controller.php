@@ -11,7 +11,7 @@ namespace App\Http\Controllers;
  *      )
  * ),
  *      @OA\Server(
- *          url="https://pos-backend.1000dtechnology.com",
+ *          url="http://localhost:8000",
  *          description="Development API Host"
  *      )
  *
