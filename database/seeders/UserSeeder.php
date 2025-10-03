@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
         );
         // Assign specific permissions to the cashier
         $cashierPermissions = [
-            $permissions['sales.create']->id,
+         
             $permissions['products.view']->id,
         ];
         $cashier->permissions()->sync($cashierPermissions);
