@@ -72,13 +72,13 @@ Route::middleware('auth:sanctum')->group(function () {
     })->middleware('permission:products.delete');
 
 
+    // Public Category Routes
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::get('/categories/search/query', [CategoryController::class, 'search']);
+
     // Protected Category Routes (Create, Update, Delete)
     Route::apiResource('categories', CategoryController::class)
         ->except(['index', 'show'],)
         ->middleware('permission:categories.manage');
 });
-
-// Public Category Routes
-Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/categories/{id}', [CategoryController::class, 'show']);
-Route::get('/categories/search/query', [CategoryController::class, 'search']);
