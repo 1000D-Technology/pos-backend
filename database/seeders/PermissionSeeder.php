@@ -33,7 +33,7 @@ class PermissionSeeder extends Seeder
 
             // Unit Management
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
-            ['name' => 'View Unit', 'slug' => 'unit.view', 'description' => 'View the unit.'],
+          
           
         ];
 
