@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UnitController;
 
 
 // Public routes
@@ -36,32 +37,31 @@ Route::get('/deploy/fix', function () {
     ]);
 });
 
-   
+
 
 // Group all routes that require a valid token
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     Route::get('/user', fn(Request $request) => $request->user());
 
-    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');  
+    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');
     Route::get('/users/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
     Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users.manage-permissions');
 
     Route::get('/users/{user}/permissions', [UserPermissionController::class, 'index'])->middleware('permission:users.view');
     Route::post('/users/{user}/permissions', [UserPermissionController::class, 'sync'])->middleware('permission:users.manage-permissions');
 
-   
 
     // --- POS Product Routes ---
     Route::get('/products', function () {
-        return response()->json(['message' => 'Viewing all products.'],status: 200);
+        return response()->json(['message' => 'Viewing all products.'], status: 200);
     })->middleware('permission:products.view');
-    
+
     // Protected routes using the 'permission' middleware
     Route::post('/products', function () {
         return response()->json(['message' => 'Product created!'], 201);
     })->middleware('permission:products.create');
-    
+
     Route::put('/products/{id}', function ($id) {
         return response()->json(['message' => "Product {$id} updated!"]);
     })->middleware('permission:products.update');
@@ -69,8 +69,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{id}', function ($id) {
         return response()->json(['message' => "Product {$id} deleted!"]);
     })->middleware('permission:products.delete');
-
-    
-
-        
 });
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+Route::apiResource('units', UnitController::class);
+Route::get('units/search', [UnitController::class, 'search']);
