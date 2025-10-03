@@ -30,6 +30,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
+
+            // Unit Management
+            ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
+            ['name' => 'View Unit', 'slug' => 'unit.view', 'description' => 'View the unit.'],
           
         ];
 

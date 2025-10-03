@@ -51,29 +51,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{user}/permissions', [UserPermissionController::class, 'index'])->middleware('permission:users.view');
     Route::post('/users/{user}/permissions', [UserPermissionController::class, 'sync'])->middleware('permission:users.manage-permissions');
 
-
-    // --- POS Product Routes ---
-    Route::get('/products', function () {
-        return response()->json(['message' => 'Viewing all products.'], status: 200);
-    })->middleware('permission:products.view');
-
-    // Protected routes using the 'permission' middleware
-    Route::post('/products', function () {
-        return response()->json(['message' => 'Product created!'], 201);
-    })->middleware('permission:products.create');
-
-    Route::put('/products/{id}', function ($id) {
-        return response()->json(['message' => "Product {$id} updated!"]);
-    })->middleware('permission:products.update');
-
-    Route::delete('/products/{id}', function ($id) {
-        return response()->json(['message' => "Product {$id} deleted!"]);
-    })->middleware('permission:products.delete');
+    //Unit routes
+    Route::get('units', [UnitController::class, 'index']);
+    Route::get('units/{unit}', [UnitController::class, 'show']);
+    Route::apiResource('units', UnitController::class)
+        ->except(['index', 'show'])
+        ->middleware('permission:unit.manage');
+    Route::get('units/search', [UnitController::class, 'search']);
 });
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::apiResource('units', UnitController::class);
-Route::get('units/search', [UnitController::class, 'search']);
