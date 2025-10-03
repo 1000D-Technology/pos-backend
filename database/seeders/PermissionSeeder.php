@@ -13,7 +13,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Seeding Permissions...');
-        
+
         $permissions = [
             // User Management
             ['name' => 'Manage User Permissions', 'slug' => 'users.manage-permissions', 'description' => 'Assign or revoke permissions from users.'],
@@ -30,7 +30,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
-          
+
+            //Category Management
+            ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
         ];
 
         foreach ($permissions as $permission) {

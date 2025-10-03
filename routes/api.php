@@ -70,12 +70,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{id}', function ($id) {
         return response()->json(['message' => "Product {$id} deleted!"]);
     })->middleware('permission:products.delete');
+
+
+    // Protected Category Routes (Create, Update, Delete)
+    Route::apiResource('categories', CategoryController::class)
+        ->except(['index', 'show'],)
+        ->middleware('permission:categories.manage');
 });
 
-//Test Category Routes
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-// Category API Routes
-Route::apiResource('categories', CategoryController::class);
+// Public Category Routes
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+Route::get('/categories/search/query', [CategoryController::class, 'search']);
