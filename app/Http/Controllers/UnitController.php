@@ -5,24 +5,39 @@ namespace App\Http\Controllers;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule; // Make sure to add this line
+use Illuminate\Validation\Rule; // Add this line
 
 /**
  * @OA\Tag(
  *     name="Units",
  *     description="API endpoints for managing units"
  * )
+ * @OA\Parameter(
+ *     parameter="search_query",
+ *     name="search",
+ *     in="query",
+ *     description="Search term for filtering units by name or symbol (case-insensitive, partial match). Excludes soft-deleted units.",
+ *     @OA\Schema(type="string")
+ * )
  */
 class UnitController extends Controller
 {
+
     /**
      * @OA\Get(
      *     path="/api/units",
-     *     summary="Get all active units",
+     *     summary="List all active units or search units by name/symbol", // Updated summary
      *     tags={"Units"},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         required=false,
+     *         description="Optional search term for filtering units by name or symbol. Excludes soft-deleted units.", // Updated description
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="List of all active units",
+     *         description="List of units (filtered by search term if provided)",
      *         @OA\JsonContent(
      *             type="array",
      *             @OA\Items(
@@ -37,25 +52,37 @@ class UnitController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        // With SoftDeletes trait, `all()` automatically excludes soft-deleted records.
-        $units = Unit::all();
+        // SoftDeletes trait automatically excludes soft-deleted records from query()
+        $query = Unit::query();
+
+        if ($search = $request->get('search')) {
+            $query->where(function($q) use ($search) {
+                // Using ILIKE for case-insensitive search (PostgreSQL)
+                // For MySQL, you might use 'LIKE' and ensure collation is case-insensitive,
+                // or use ->whereRaw("LOWER(name) LIKE ?", ['%' . strtolower($search) . '%'])
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('symbol', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        $units = $query->orderBy('name')->get();
         return response()->json($units);
     }
+
 
     /**
      * @OA\Post(
      *     path="/api/units",
      *     summary="Create a new unit",
      *     tags={"Units"},
-     *     security={{"bearerAuth":{}}}, // Assuming 'permission:unit.manage' might be tied to authentication
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name", "symbol"},
-     *             @OA\Property(property="name", type="string", maxLength=255, example="Kilogram"),
-     *             @OA\Property(property="symbol", type="string", maxLength=255, example="kg")
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="symbol", type="string", maxLength=255)
      *         )
      *     ),
      *     @OA\Response(
@@ -63,27 +90,19 @@ class UnitController extends Controller
      *         description="Unit created successfully",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Kilogram"),
-     *             @OA\Property(property="symbol", type="string", example="kg"),
-     *             @OA\Property(property="created_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z"),
-     *             @OA\Property(property="updated_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z")
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="symbol", type="string"),
+     *             @OA\Property(property="created_at", type="string", format="datetime"),
+     *             @OA\Property(property="updated_at", type="string", format="datetime")
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
      *         @OA\JsonContent(
-     *             @OA\Property(property="errors", type="object", example={"name": {"The name has already been taken."}})
+     *             @OA\Property(property="errors", type="object")
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized - if bearerAuth is active"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Forbidden - if permission:unit.manage is active"
      *     )
      * )
      */
@@ -95,7 +114,7 @@ class UnitController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('units')->where(function ($query) {
-                    return $query->whereNull('deleted_at'); // Only check against non-deleted units
+                    $query->whereNull('deleted_at'); // Only check against non-deleted units
                 }),
             ],
             'symbol' => [
@@ -103,7 +122,7 @@ class UnitController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('units')->where(function ($query) {
-                    return $query->whereNull('deleted_at'); // Only check against non-deleted units
+                    $query->whereNull('deleted_at'); // Only check against non-deleted units
                 }),
             ],
         ]);
@@ -116,43 +135,41 @@ class UnitController extends Controller
         return response()->json($unit, 201);
     }
 
+
     /**
      * @OA\Get(
      *     path="/api/units/{id}",
      *     summary="Get a specific active unit by ID",
      *     tags={"Units"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="ID of the unit",
-     *         @OA\Schema(type="integer", format="int64", example=1)
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Unit details",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Kilogram"),
-     *             @OA\Property(property="symbol", type="string", example="kg"),
-     *             @OA\Property(property="created_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z"),
-     *             @OA\Property(property="updated_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z")
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="symbol", type="string"),
+     *             @OA\Property(property="created_at", type="string", format="datetime"),
+     *             @OA\Property(property="updated_at", type="string", format="datetime")
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Unit not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unit not found")
-     *         )
+     *         description="Unit not found"
      *     )
      * )
      */
     public function show($id)
     {
-        // With SoftDeletes trait, `find()` automatically excludes soft-deleted records by default.
-        $unit = Unit::find($id);
+        $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
             return response()->json(['message' => 'Unit not found'], 404);
@@ -161,25 +178,26 @@ class UnitController extends Controller
         return response()->json($unit);
     }
 
+
     /**
      * @OA\Put(
      *     path="/api/units/{id}",
      *     summary="Update a unit",
      *     tags={"Units"},
-     *     security={{"bearerAuth":{}}}, // Assuming 'permission:unit.manage' might be tied to authentication
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="ID of the unit",
-     *         @OA\Schema(type="integer", format="int64", example=1)
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name", "symbol"},
-     *             @OA\Property(property="name", type="string", maxLength=255, example="Kilogram"),
-     *             @OA\Property(property="symbol", type="string", maxLength=255, example="Kg")
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="symbol", type="string", maxLength=255)
      *         )
      *     ),
      *     @OA\Response(
@@ -187,41 +205,26 @@ class UnitController extends Controller
      *         description="Unit updated successfully",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Kilogram"),
-     *             @OA\Property(property="symbol", type="string", example="Kg"),
-     *             @OA\Property(property="created_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z"),
-     *             @OA\Property(property="updated_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z")
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="symbol", type="string"),
+     *             @OA\Property(property="created_at", type="string", format="datetime"),
+     *             @OA\Property(property="updated_at", type="string", format="datetime")
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Unit not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unit not found")
-     *         )
+     *         description="Unit not found"
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="errors", type="object", example={"symbol": {"The symbol has already been taken."}})
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized - if bearerAuth is active"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Forbidden - if permission:unit.manage is active"
+     *         description="Validation error"
      *     )
      * )
      */
     public function update(Request $request, $id)
     {
-        // With SoftDeletes trait, `find()` automatically excludes soft-deleted records by default.
-        $unit = Unit::find($id);
+        $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
             return response()->json(['message' => 'Unit not found'], 404);
@@ -233,7 +236,7 @@ class UnitController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('units')->ignore($unit->id)->where(function ($query) {
-                    return $query->whereNull('deleted_at'); // Only check against non-deleted units
+                    $query->whereNull('deleted_at'); // Only check against non-deleted units
                 }),
             ],
             'symbol' => [
@@ -241,7 +244,7 @@ class UnitController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('units')->ignore($unit->id)->where(function ($query) {
-                    return $query->whereNull('deleted_at'); // Only check against non-deleted units
+                    $query->whereNull('deleted_at'); // Only check against non-deleted units
                 }),
             ],
         ]);
@@ -259,105 +262,40 @@ class UnitController extends Controller
      *     path="/api/units/{id}",
      *     summary="Soft delete a unit",
      *     tags={"Units"},
-     *     security={{"bearerAuth":{}}}, // Assuming 'permission:unit.manage' might be tied to authentication
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="ID of the unit to soft delete",
-     *         @OA\Schema(type="integer", format="int64", example=1)
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Unit soft deleted successfully",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unit soft deleted successfully")
+     *             @OA\Property(property="message", type="string")
      *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Unit not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unit not found")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized - if bearerAuth is active"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Forbidden - if permission:unit.manage is active"
+     *         description="Unit not found"
      *     )
      * )
      */
     public function destroy($id)
     {
-        // With SoftDeletes trait, `find()` automatically excludes soft-deleted records by default.
-        $unit = Unit::find($id);
+        $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
             return response()->json(['message' => 'Unit not found'], 404);
         }
 
-        $unit->delete(); // This performs a soft delete
+        $unit->delete(); // This will soft delete the unit
         return response()->json(['message' => 'Unit soft deleted successfully']);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/units/search",
-     *     summary="Search active units by name or symbol (case-insensitive, partial match)",
-     *     tags={"Units"},
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         required=true,
-     *         description="Search term for unit name or symbol",
-     *         @OA\Schema(type="string", example="kg")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of matching active units",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Kilogram"),
-     *                 @OA\Property(property="symbol", type="string", example="kg"),
-     *                 @OA\Property(property="created_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z"),
-     *                 @OA\Property(property="updated_at", type="string", format="datetime", example="2023-10-27T10:00:00.000000Z")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Search query not provided",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Please provide a search query (e.g., ?name=kg)")
-     *         )
-     *     )
-     * )
-     */
-    public function search(Request $request)
-    {
-        $searchTerm = $request->input('name'); // Assuming Postman sends 'name' in query parameters
-
-        if (!$searchTerm) {
-            return response()->json(['message' => 'Please provide a search query (e.g., ?name=kg)'], 400);
-        }
-
-        $units = Unit::where(function ($query) use ($searchTerm) {
-            // For PostgreSQL, use ILIKE for case-insensitive search
-            // For MySQL, use LIKE and ensure database collation is case-insensitive,
-            // or use whereRaw("LOWER(name) LIKE ?", ['%' . strtolower($searchTerm) . '%'])
-            $query->where('name', 'ILIKE', '%' . $searchTerm . '%')
-                  ->orWhere('symbol', 'ILIKE', '%' . $searchTerm . '%');
-        })
-        ->get(); // SoftDeletes trait automatically excludes soft-deleted records from `get()`
-
-        return response()->json($units);
-    }
+    // The separate 'search' method has been removed as per your request,
+    // and its functionality is now integrated into the 'index' method.
 }
