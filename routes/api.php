@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\UserPermissionController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -55,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- POS Product Routes ---
     Route::get('/products', function () {
-        return response()->json(['message' => 'Viewing all products.'],status: 200);
+        return response()->json(['message' => 'Viewing all products.'], status: 200);
     })->middleware('permission:products.view');
 
     // Protected routes using the 'permission' middleware
@@ -86,4 +87,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     //supplier delete
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+    // Public Category Routes
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::get('/categories/search/query', [CategoryController::class, 'search']);
+
+    // Protected Category Routes (Create, Update, Delete)
+    Route::apiResource('categories', CategoryController::class)
+        ->except(['index', 'show'],)
+        ->middleware('permission:categories.manage');
 });
