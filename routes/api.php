@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -108,6 +109,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categories', CategoryController::class)
         ->except(['index', 'show'])
         ->middleware('permission:categories.manage');
+
+    // Customer Routes - Protected with specific permissions
+    Route::get('/customers/deleted', [CustomerController::class, 'deleted'])
+        ->middleware('permission:customers.view');
+
+    Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])
+        ->middleware('permission:customers.restore');
+
+    Route::get('/customers/search', [CustomerController::class, 'search'])
+        ->middleware('permission:customers.search');
+
+    Route::get('/customers', [CustomerController::class, 'index'])
+        ->middleware('permission:customers.view');
+
+    Route::post('/customers', [CustomerController::class, 'store'])
+        ->middleware('permission:customers.create');
+
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])
+        ->middleware('permission:customers.view');
+
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])
+        ->middleware('permission:customers.update');
+
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])
+        ->middleware('permission:customers.delete');
 });
 
 // Public Category Routes - These don't require authentication
