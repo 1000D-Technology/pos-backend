@@ -135,23 +135,50 @@ class CustomerController extends Controller
      *     path="/api/customers",
      *     tags={"Customers"},
      *     summary="Create a new customer",
-     *     description="Create a new customer. Requires 'customers.create' permission.",
+     *     description="Create a new customer. Requires 'customers.create' permission. Only validated fields (name, contact_no, email, address) are accepted.",
      *     operationId="storeCustomer",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
+     *         description="Customer data to create",
      *         @OA\JsonContent(
      *             required={"contact_no"},
-     *             @OA\Property(property="name", type="string", maxLength=255, example="John Doe"),
-     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890"),
-     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
-     *             @OA\Property(property="address", type="string", example="123 Main St")
+     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe", description="Customer name (optional)"),
+     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890", description="Customer contact number (required)"),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john@example.com", description="Customer email (optional, must be unique)"),
+     *             @OA\Property(property="address", type="string", nullable=true, example="123 Main St, City, Country", description="Customer address (optional)")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Customer created successfully"),
-     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Customer created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer created successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
      *     @OA\Response(response=403, description="Forbidden - Missing permission"),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="contact_no", type="array", @OA\Items(type="string", example="The contact no field is required.")),
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email has already been taken."))
+     *             )
+     *         )
+     *     )
      * )
      */
     public function store(Request $request): JsonResponse
@@ -170,7 +197,8 @@ class CustomerController extends Controller
             ], 422);
         }
 
-        $customer = Customer::create($request->all());
+        // Use only validated fields to prevent mass assignment vulnerabilities
+        $customer = Customer::create($request->only(['name', 'contact_no', 'email', 'address']));
 
         return response()->json([
             'success' => true,
@@ -226,7 +254,7 @@ class CustomerController extends Controller
      *     path="/api/customers/{id}",
      *     tags={"Customers"},
      *     summary="Update a customer",
-     *     description="Update customer information. Requires 'customers.update' permission.",
+     *     description="Update customer information with partial updates supported. Requires 'customers.update' permission. Only validated fields are accepted.",
      *     operationId="updateCustomer",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -237,16 +265,81 @@ class CustomerController extends Controller
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\RequestBody(
-     *         required=true,
+     *         required=false,
+     *         description="Customer data to update (all fields are optional for partial updates)",
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="contact_no", type="string", example="+1234567890"),
-     *             @OA\Property(property="email", type="string", example="john@example.com"),
-     *             @OA\Property(property="address", type="string", example="123 Main St")
+     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe Updated", description="Customer name"),
+     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890", description="Customer contact number"),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john.updated@example.com", description="Customer email (must be unique)"),
+     *             @OA\Property(property="address", type="string", nullable=true, example="456 New St, City, Country", description="Customer address")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Customer updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe Updated"),
+     *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *                 @OA\Property(property="email", type="string", example="john.updated@example.com"),
+     *                 @OA\Property(property="address", type="string", example="456 New St"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
+     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Customer not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Customer not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="contact_no", type="array", @OA\Items(type="string", example="The contact no must not exceed 20 characters.")),
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email has already been taken."))
+     *             )
+     *         )
+     *     )
+     * )
+     * 
+     * @OA\Patch(
+     *     path="/api/customers/{id}",
+     *     tags={"Customers"},
+     *     summary="Partially update a customer",
+     *     description="Partially update customer information. Requires 'customers.update' permission. Only validated fields are accepted.",
+     *     operationId="patchCustomer",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Customer ID",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         description="Customer data to update (all fields are optional)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe Updated"),
+     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890"),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john.updated@example.com"),
+     *             @OA\Property(property="address", type="string", nullable=true, example="456 New St, City, Country")
      *         )
      *     ),
      *     @OA\Response(response=200, description="Customer updated successfully"),
-     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
      *     @OA\Response(response=403, description="Forbidden - Missing permission"),
      *     @OA\Response(response=404, description="Customer not found"),
      *     @OA\Response(response=422, description="Validation error")
@@ -263,11 +356,12 @@ class CustomerController extends Controller
             ], 404);
         }
 
+        // Validation rules - all fields are optional for partial updates
         $validator = Validator::make($request->all(), [
-            'name' => 'nullable|string|max:255',
-            'contact_no' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255|unique:customers,email,' . $id,
-            'address' => 'nullable|string',
+            'name' => 'sometimes|nullable|string|max:255',
+            'contact_no' => 'sometimes|required|string|max:20',
+            'email' => 'sometimes|nullable|email|max:255|unique:customers,email,' . $id,
+            'address' => 'sometimes|nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -277,12 +371,13 @@ class CustomerController extends Controller
             ], 422);
         }
 
-        $customer->update($request->all());
+        // Use only validated fields to prevent mass assignment vulnerabilities
+        $customer->update($request->only(['name', 'contact_no', 'email', 'address']));
 
         return response()->json([
             'success' => true,
             'message' => 'Customer updated successfully',
-            'data' => $customer
+            'data' => $customer->fresh()
         ]);
     }
 
