@@ -5,13 +5,40 @@ namespace App\Http\Controllers\Api;
 use App\DTO\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
-use http\Client\Response;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Tag(
+ * name="Suppliers",
+ * description="API Endpoints for managing Suppliers"
+ * )
+ */
 class SupplierController extends Controller
 {
+
     /**
      * Display a listing of the resource.
+     */
+
+    /**
+     * @OA\Get(
+     * path="/api/suppliers",
+     * tags={"Suppliers"},
+     * summary="Retrieve a paginated list of suppliers",
+     * @OA\Response(
+     * response=200,
+     * description="Suppliers list retrieved successfully.",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Suppliers list retrieved successfully."),
+     * @OA\Property(property="data", type="object",
+     * @OA\Property(property="current_page", type="integer", example=1),
+     * // ... other pagination fields
+     * @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Supplier")),
+     * )
+     * )
+     * ),
+     * )
      */
     public function index()
     {
@@ -22,6 +49,39 @@ class SupplierController extends Controller
     }
 
     // Search suppliers by name
+    /**
+     * @OA\Get(
+     * path="/api/suppliers/search",
+     * tags={"Suppliers"},
+     * summary="Search suppliers by name",
+     * @OA\Parameter(
+     * name="name",
+     * in="query",
+     * required=true,
+     * description="The name or partial name of the supplier to search for.",
+     * @OA\Schema(type="string", minLength=1)
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Suppliers search results retrieved successfully.",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Suppliers search results retrieved successfully."),
+     * @OA\Property(property="data", type="object",
+     * @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Supplier"))
+     * )
+     * )
+     * ),
+     * @OA\Response(
+     * response=404,
+     * description="No suppliers found matching the search criteria."
+     * ),
+     * @OA\Response(
+     * response=422,
+     * description="Validation failed (e.g., 'name' is missing)."
+     * ),
+     * )
+     */
     public function search(Request $request)
     {
         $request->validate(['name'=>'required|string|max:100|min:1']);
@@ -45,6 +105,41 @@ class SupplierController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     */
+    /**
+     * @OA\Post(
+     * path="/api/suppliers",
+     * tags={"Suppliers"},
+     * summary="Create a new supplier",
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"name", "email", "company"},
+     * @OA\Property(property="name", type="string", example="New Supplier Co.", maxLength=100),
+     * @OA\Property(property="email", type="string", format="email", example="supplier@example.com", maxLength=100),
+     * @OA\Property(property="phone", type="string", example="0771234567", maxLength=20, nullable=true),
+     * @OA\Property(property="address", type="string", example="123 Main St, City", maxLength=255, nullable=true),
+     * @OA\Property(property="company", type="string", example="Acme Products", maxLength=100),
+     * )
+     * ),
+     * @OA\Response(
+     * response=201,
+     * description="Supplier created successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Supplier created successfully"),
+     * @OA\Property(property="data", ref="#/components/schemas/Supplier")
+     * )
+     * ),
+     * @OA\Response(
+     * response=443,
+     * description="Validation failed"
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server error"
+     * ),
+     * )
      */
     public function store(Request $request)
     {
@@ -80,6 +175,33 @@ class SupplierController extends Controller
     /**
      * Display the specified resource.
      */
+    /**
+     * @OA\Get(
+     * path="/api/suppliers/{id}",
+     * tags={"Suppliers"},
+     * summary="Retrieve a specific supplier by ID",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID of the supplier to retrieve",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Supplier retrieved successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Supplier retrieved successfully"),
+     * @OA\Property(property="data", ref="#/components/schemas/Supplier")
+     * )
+     * ),
+     * @OA\Response(
+     * response=404,
+     * description="Supplier not found"
+     * )
+     * )
+     */
     public function show(string $id)
     {
         $supplier = Supplier::find($id);
@@ -91,6 +213,51 @@ class SupplierController extends Controller
 
     /**
      * Update the specified resource in storage.
+     */
+    /**
+     * @OA\Put(
+     * path="/api/suppliers/{id}",
+     * tags={"Suppliers"},
+     * summary="Update an existing supplier",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID of the supplier to update",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * @OA\Property(property="name", type="string", example="Updated Supplier Name", maxLength=100, nullable=true),
+     * @OA\Property(property="email", type="string", format="email", example="new_email@example.com", maxLength=100, nullable=true),
+     * @OA\Property(property="phone", type="string", example="0779998887", maxLength=20, nullable=true),
+     * @OA\Property(property="address", type="string", example="456 New Road, Town", maxLength=255, nullable=true),
+     * @OA\Property(property="company", type="string", example="New Products Inc.", maxLength=100, nullable=true),
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Supplier updated successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Supplier updated successfully"),
+     * @OA\Property(property="data", ref="#/components/schemas/Supplier")
+     * )
+     * ),
+     * @OA\Response(
+     * response=404,
+     * description="Supplier not found"
+     * ),
+     * @OA\Response(
+     * response=443,
+     * description="Validation failed"
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server error"
+     * ),
+     * )
      */
     public function update(Request $request, string $id)
     {
@@ -130,6 +297,36 @@ class SupplierController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     */
+    /**
+     * @OA\Delete(
+     * path="/api/suppliers/{id}",
+     * tags={"Suppliers"},
+     * summary="Delete a supplier (Soft Delete)",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * description="ID of the supplier to delete",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Supplier deleted successfully",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="message", type="string", example="Supplier deleted successfully")
+     * )
+     * ),
+     * @OA\Response(
+     * response=404,
+     * description="Supplier not found"
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Server error"
+     * ),
+     * )
      */
     public function destroy(string $id)
     {
