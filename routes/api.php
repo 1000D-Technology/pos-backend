@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Models\User;
@@ -72,6 +73,20 @@ Route::middleware('auth:sanctum')->group(function () {
     })->middleware('permission:products.delete');
 
 
+    //supplier routes
+
+    //search by name
+    Route::get('/suppliers/search', [SupplierController::class, 'search'])->middleware('permission:suppliers.view');
+    //search all suppliers
+    Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
+    //create a new supplier
+    Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('permission:suppliers.create');
+    //view a single supplier by id
+    Route::get('/suppliers/{id}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
+    //update a supplier
+    Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
+    //supplier delete
+    Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
     // Public Category Routes
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
