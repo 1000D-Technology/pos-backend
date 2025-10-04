@@ -73,6 +73,19 @@ Route::middleware('auth:sanctum')->group(function () {
     })->middleware('permission:products.delete');
 
 
+    // Protected Category Routes (Create, Update, Delete, Restore, Bulk Operations)
+    // Note: Order matters - specific routes must come before parameterized routes
+    Route::get('/categories/deleted', [CategoryController::class, 'deleted'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-restore', [CategoryController::class, 'bulkRestore'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])
+        ->middleware('permission:categories.manage');
     //supplier routes
 
     //search by name
@@ -92,8 +105,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/search/query', [CategoryController::class, 'search']);
 
-    // Protected Category Routes (Create, Update, Delete)
     Route::apiResource('categories', CategoryController::class)
-        ->except(['index', 'show'],)
+        ->except(['index', 'show'])
         ->middleware('permission:categories.manage');
 });
+
+// Public Category Routes - These don't require authentication
+// Note: Search must come before {id} route to avoid route conflicts
+Route::get('/categories/search', [CategoryController::class, 'search']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
