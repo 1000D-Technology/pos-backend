@@ -7,12 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- * name="Suppliers",
- * description="API Endpoints for managing Suppliers"
- * )
- */
 class SupplierController extends Controller
 {
 
@@ -21,25 +15,41 @@ class SupplierController extends Controller
      */
 
     /**
-     * @OA\Get(
-     * path="/api/suppliers",
-     * tags={"Suppliers"},
-     * summary="Retrieve a paginated list of suppliers",
-     * @OA\Response(
-     * response=200,
-     * description="Suppliers list retrieved successfully.",
-     * @OA\JsonContent(
-     * @OA\Property(property="success", type="boolean", example=true),
-     * @OA\Property(property="message", type="string", example="Suppliers list retrieved successfully."),
-     * @OA\Property(property="data", type="object",
-     * @OA\Property(property="current_page", type="integer", example=1),
-     * // ... other pagination fields
-     * @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Supplier")),
-     * )
-     * )
-     * ),
-     * )
-     */
+      * @OA\Get(
+      *     path="/api/suppliers",
+      *     tags={"Suppliers"},
+      *     summary="Get paginated list of suppliers",
+      *     @OA\Response(
+      *         response=200,
+      *         description="Successful operation",
+      *         @OA\JsonContent(
+      *             @OA\Property(property="success", type="boolean", example=true),
+      *             @OA\Property(property="message", type="string", example="Suppliers list retrieved successfully."),
+      *             @OA\Property(
+      *                 property="data",
+      *                 type="object",
+      *                 @OA\Property(property="current_page", type="integer", example=1),
+      *                 @OA\Property(
+      *                     property="data",
+      *                     type="array",
+      *                     @OA\Items(ref="#/components/schemas/Supplier")
+      *                 ),
+      *                 @OA\Property(property="first_page_url", type="string"),
+      *                 @OA\Property(property="from", type="integer"),
+      *                 @OA\Property(property="last_page", type="integer"),
+      *                 @OA\Property(property="last_page_url", type="string"),
+      *                 @OA\Property(property="links", type="array", @OA\Items(type="object")),
+      *                 @OA\Property(property="next_page_url", type="string", nullable=true),
+      *                 @OA\Property(property="path", type="string"),
+      *                 @OA\Property(property="per_page", type="integer"),
+      *                 @OA\Property(property="prev_page_url", type="string", nullable=true),
+      *                 @OA\Property(property="to", type="integer"),
+      *                 @OA\Property(property="total", type="integer")
+      *             )
+      *         )
+      *     )
+      * )
+      */
     public function index()
     {
         $suppliers = Supplier::select('id', 'name', 'email', 'phone', 'address', 'company')->paginate(15);
@@ -48,17 +58,17 @@ class SupplierController extends Controller
         );
     }
 
-    // Search suppliers by name
+    // Search suppliers by name, email, phone, or company using a single search term (OR logic)
     /**
      * @OA\Get(
      * path="/api/suppliers/search",
      * tags={"Suppliers"},
-     * summary="Search suppliers by name",
+     * summary="Search suppliers by name, email, phone, or company",
      * @OA\Parameter(
-     * name="name",
+     * name="search_term",
      * in="query",
      * required=true,
-     * description="The name or partial name of the supplier to search for.",
+     * description="The term to search for across name, email, phone, and company fields.",
      * @OA\Schema(type="string", minLength=1)
      * ),
      * @OA\Response(
@@ -78,17 +88,22 @@ class SupplierController extends Controller
      * ),
      * @OA\Response(
      * response=422,
-     * description="Validation failed (e.g., 'name' is missing)."
+     * description="Validation failed (e.g., 'search_term' is missing)."
      * ),
      * )
      */
     public function search(Request $request)
     {
-        $request->validate(['name'=>'required|string|max:100|min:1']);
+        $request->validate(['search_term'=>'required|string|max:100|min:1']);
 
-        $name = $request->input('name');
-
-        $query = Supplier::select('id', 'name', 'email', 'phone', 'address', 'company')->where('name','LIKE', $name.'%');
+        $searchTerm = $request->input('search_term');
+        $like = '%'.$searchTerm.'%';
+        $query = Supplier::select('id', 'name', 'email', 'phone', 'address', 'company')->where(function ($q) use ($like) {
+            $q->where('name', 'LIKE', $like)
+              ->orWhere('email', 'LIKE', $like)
+              ->orWhere('phone', 'LIKE', $like)
+              ->orWhere('company', 'LIKE', $like);
+        });
         $suppliers = $query->paginate(10);
 
         if($suppliers->isEmpty()){
