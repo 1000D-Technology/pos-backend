@@ -85,10 +85,10 @@
                 }
             }
         },
-        "/api/categories": {
+        "/api/suppliers": {
             "get": {
                 "tags": [
-                    "Categories"
+                    "Suppliers"
                 ],
                 "summary": "Get all active categories",
                 "description": "Retrieve a list of all active categories (excludes soft deleted categories). Supports sorting and pagination.",
@@ -136,6 +136,8 @@
                         }
                     }
                 ],
+                "summary": "Get paginated list of suppliers",
+                "operationId": "6207e57dd1dcd1d6e7125fe144607196",
                 "responses": {
                     "200": {
                         "description": "Successful operation",
@@ -193,7 +195,60 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Internal server error"
+                                            "example": "Suppliers list retrieved successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Supplier"
+                                                    }
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string"
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "path": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -205,32 +260,48 @@
             },
             "post": {
                 "tags": [
-                    "Categories"
+                    "Suppliers"
                 ],
-                "summary": "Create a new category",
-                "description": "Store a newly created category in the database. Requires authentication and categories.manage permission.",
-                "operationId": "storeCategory",
+                "summary": "Create a new supplier",
+                "operationId": "dc5dc7ccb140cd5b81cab6f42b396691",
                 "requestBody": {
-                    "description": "Category data",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "email",
+                                    "company"
                                 ],
                                 "properties": {
                                     "name": {
-                                        "description": "Category name",
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "New Supplier Co."
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 100,
+                                        "example": "supplier@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "0771234567",
+                                        "nullable": true
+                                    },
+                                    "address": {
                                         "type": "string",
                                         "maxLength": 255,
-                                        "example": "Electronics"
-                                    },
-                                    "description": {
-                                        "description": "Category description",
-                                        "type": "string",
-                                        "example": "Electronic devices and accessories",
+                                        "example": "123 Main St, City",
                                         "nullable": true
+                                    },
+                                    "company": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Acme Products"
                                     }
                                 },
                                 "type": "object"
@@ -240,7 +311,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Category created successfully",
+                        "description": "Supplier created successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -251,11 +322,10 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Category created successfully"
+                                            "example": "Supplier created successfully"
                                         },
                                         "data": {
-                                            "description": "Created category data",
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/Supplier"
                                         }
                                     },
                                     "type": "object"
@@ -263,88 +333,37 @@
                             }
                         }
                     },
-                    "401": {
-                        "description": "Unauthenticated",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "443": {
+                        "description": "Validation failed"
                     },
-                    "403": {
-                        "description": "Forbidden - Insufficient permissions",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "You do not have the required permission."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "description": "Validation errors",
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "500": {
+                        "description": "Server error"
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
-        "/api/categories/{id}": {
+        "/api/suppliers/search": {
             "get": {
                 "tags": [
-                    "Categories"
+                    "Suppliers"
                 ],
-                "summary": "Get a specific category by ID",
-                "description": "Retrieve a single category using its unique identifier",
-                "operationId": "getCategoryById",
+                "summary": "Search suppliers by name, email, phone, or company",
+                "operationId": "e6033d654f6530c69996ecc1f117b764",
                 "parameters": [
                     {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Category ID",
+                        "name": "search_term",
+                        "in": "query",
+                        "description": "The term to search for across name, email, phone, and company fields.",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Category retrieved successfully",
+                        "description": "Suppliers search results retrieved successfully.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -353,8 +372,19 @@
                                             "type": "boolean",
                                             "example": true
                                         },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Suppliers search results retrieved successfully."
+                                        },
                                         "data": {
-                                            "description": "Category object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Supplier"
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -364,60 +394,113 @@
                         }
                     },
                     "404": {
-                        "description": "Category not found",
+                        "description": "No suppliers found matching the search criteria."
+                    },
+                    "422": {
+                        "description": "Validation failed (e.g., 'search_term' is missing)."
+                    }
+                }
+            }
+        },
+        "/api/suppliers/{id}": {
+            "get": {
+                "tags": [
+                    "Suppliers"
+                ],
+                "summary": "Retrieve a specific supplier by ID",
+                "operationId": "7fc447855461518ce36bdeb5a44310a3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the supplier to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Supplier retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "boolean",
-                                            "example": false
+                                            "example": true
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Category not found"
+                                            "example": "Supplier retrieved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Supplier"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "description": "Supplier not found"
                     }
                 }
             },
             "put": {
                 "tags": [
-                    "Categories"
+                    "Suppliers"
                 ],
-                "summary": "Update a category",
-                "description": "Update an existing category by ID. Requires authentication and categories.manage permission.",
-                "operationId": "updateCategory",
+                "summary": "Update an existing supplier",
+                "operationId": "22145931fdda85497cf90c73c5406747",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Category ID",
+                        "description": "ID of the supplier to update",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
                 "requestBody": {
-                    "description": "Category data to update",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "description": "Category name",
                                         "type": "string",
-                                        "maxLength": 255
+                                        "maxLength": 100,
+                                        "example": "Updated Supplier Name",
+                                        "nullable": true
                                     },
-                                    "description": {
-                                        "description": "Category description",
+                                    "email": {
                                         "type": "string",
+                                        "format": "email",
+                                        "maxLength": 100,
+                                        "example": "new_email@example.com",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "0779998887",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "456 New Road, Town",
+                                        "nullable": true
+                                    },
+                                    "company": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "New Products Inc.",
                                         "nullable": true
                                     }
                                 },
@@ -428,7 +511,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Category updated successfully",
+                        "description": "Supplier updated successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -439,43 +522,10 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Category updated successfully"
+                                            "example": "Supplier updated successfully"
                                         },
                                         "data": {
-                                            "description": "Updated category object",
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden - Insufficient permissions",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "You do not have the required permission."
+                                            "$ref": "#/components/schemas/Supplier"
                                         }
                                     },
                                     "type": "object"
@@ -484,73 +534,40 @@
                         }
                     },
                     "404": {
-                        "description": "Category not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Category not found"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Supplier not found"
                     },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "description": "Validation errors",
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "443": {
+                        "description": "Validation failed"
+                    },
+                    "500": {
+                        "description": "Server error"
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             },
             "delete": {
                 "tags": [
-                    "Categories"
+                    "Suppliers"
                 ],
                 "summary": "Delete a category (Soft Delete)",
                 "description": "Soft delete a category by ID. The category is marked as deleted but not physically removed from the database. Requires authentication and categories.manage permission.",
                 "operationId": "9b61b65823f4a21f182506b34ddf805c",
+                "summary": "Delete a supplier (Soft Delete)",
+                "operationId": "2fe04361f0f1581a9f5dbb4094b634b2",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Category ID",
+                        "description": "ID of the supplier to delete",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Category soft deleted successfully",
+                        "description": "Supplier deleted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -561,39 +578,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Category deleted successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthenticated",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden - Insufficient permissions",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "You do not have the required permission."
+                                            "example": "Supplier deleted successfully"
                                         }
                                     },
                                     "type": "object"
@@ -1091,110 +1076,10 @@
                             "minLength": 1,
                             "example": "electronics"
                         }
+                        "description": "Supplier not found"
                     },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Number of items per page (1-100)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 15,
-                            "maximum": 100,
-                            "minimum": 1,
-                            "example": 20
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Categories found successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Electronics"
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "Electronic devices and accessories"
-                                                    },
-                                                    "product_count": {
-                                                        "type": "integer",
-                                                        "example": 25
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "meta": {
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "last_page": {
-                                                    "type": "integer",
-                                                    "example": 5
-                                                },
-                                                "per_page": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 67
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "query": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The query field is required."
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "500": {
+                        "description": "Server error"
                     }
                 }
             }
@@ -1459,37 +1344,53 @@
                 },
                 "type": "object"
             },
-            "Category": {
-                "title": "Category",
-                "description": "Category model",
+            "Supplier": {
+                "title": "Supplier",
+                "description": "Supplier data model",
                 "properties": {
                     "id": {
-                        "description": "Category ID",
                         "type": "integer",
+                        "format": "int64",
                         "example": 1
                     },
                     "name": {
-                        "description": "Category name",
                         "type": "string",
-                        "example": "Electronics"
+                        "example": "John Doe"
                     },
-                    "description": {
-                        "description": "Category description",
+                    "email": {
                         "type": "string",
-                        "example": "Electronic devices and accessories",
+                        "format": "email",
+                        "example": "john@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0771234567",
                         "nullable": true
                     },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St",
+                        "nullable": true
+                    },
+                    "company": {
+                        "type": "string",
+                        "example": "Acme Inc"
+                    },
                     "created_at": {
-                        "description": "Creation timestamp",
                         "type": "string",
                         "format": "date-time",
-                        "example": "2025-10-03T10:30:00.000000Z"
+                        "readOnly": true
                     },
                     "updated_at": {
-                        "description": "Last update timestamp",
                         "type": "string",
                         "format": "date-time",
-                        "example": "2025-10-03T10:30:00.000000Z"
+                        "readOnly": true
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -1510,8 +1411,8 @@
             "description": "Authentication"
         },
         {
-            "name": "Categories",
-            "description": "Categories"
+            "name": "Suppliers",
+            "description": "Suppliers"
         },
         {
             "name": "Users",
