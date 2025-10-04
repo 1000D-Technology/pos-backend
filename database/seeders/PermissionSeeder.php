@@ -13,7 +13,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Seeding Permissions...');
-        
+
         $permissions = [
             // User Management
             ['name' => 'Manage User Permissions', 'slug' => 'users.manage-permissions', 'description' => 'Assign or revoke permissions from users.'],
@@ -25,12 +25,22 @@ class PermissionSeeder extends Seeder
             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
 
+            // Supplier management
+            ['name' => 'Create Suppliers', 'slug' => 'suppliers.create', 'description' => 'Add new suppliers to the system.'],
+            ['name' => 'Update Suppliers', 'slug' => 'suppliers.update', 'description' => 'Edit existing supplier details.'],
+            ['name' => 'Delete Suppliers', 'slug' => 'suppliers.delete', 'description' => 'Remove suppliers from the system.'],
+            ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
+            ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
+
             // Product Management
-            ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
-            ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
-            ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
-            ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
-          
+//             ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
+//             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
+//             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
+//             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
+
+            //Category Management
+            ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
         ];
 
         foreach ($permissions as $permission) {

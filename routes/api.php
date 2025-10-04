@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\UserPermissionController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -36,32 +38,32 @@ Route::get('/deploy/fix', function () {
     ]);
 });
 
-   
+
 
 // Group all routes that require a valid token
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     Route::get('/user', fn(Request $request) => $request->user());
 
-    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');  
+    Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');
     Route::get('/users/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
     Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users.manage-permissions');
 
     Route::get('/users/{user}/permissions', [UserPermissionController::class, 'index'])->middleware('permission:users.view');
     Route::post('/users/{user}/permissions', [UserPermissionController::class, 'sync'])->middleware('permission:users.manage-permissions');
 
-   
+
 
     // --- POS Product Routes ---
     Route::get('/products', function () {
-        return response()->json(['message' => 'Viewing all products.'],status: 200);
+        return response()->json(['message' => 'Viewing all products.'], status: 200);
     })->middleware('permission:products.view');
-    
+
     // Protected routes using the 'permission' middleware
     Route::post('/products', function () {
         return response()->json(['message' => 'Product created!'], 201);
     })->middleware('permission:products.create');
-    
+
     Route::put('/products/{id}', function ($id) {
         return response()->json(['message' => "Product {$id} updated!"]);
     })->middleware('permission:products.update');
@@ -70,7 +72,46 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => "Product {$id} deleted!"]);
     })->middleware('permission:products.delete');
 
-    
 
-        
+    // Protected Category Routes (Create, Update, Delete, Restore, Bulk Operations)
+    // Note: Order matters - specific routes must come before parameterized routes
+    Route::get('/categories/deleted', [CategoryController::class, 'deleted'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-restore', [CategoryController::class, 'bulkRestore'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])
+        ->middleware('permission:categories.manage');
+    //supplier routes
+
+    //search by name
+    Route::get('/suppliers/search', [SupplierController::class, 'search'])->middleware('permission:suppliers.view');
+    //search all suppliers
+    Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
+    //create a new supplier
+    Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('permission:suppliers.create');
+    //view a single supplier by id
+    Route::get('/suppliers/{id}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
+    //update a supplier
+    Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
+    //supplier delete
+    Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+    // Public Category Routes
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::get('/categories/search/query', [CategoryController::class, 'search']);
+
+    Route::apiResource('categories', CategoryController::class)
+        ->except(['index', 'show'])
+        ->middleware('permission:categories.manage');
 });
+
+// Public Category Routes - These don't require authentication
+// Note: Search must come before {id} route to avoid route conflicts
+Route::get('/categories/search', [CategoryController::class, 'search']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
