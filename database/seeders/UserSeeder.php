@@ -41,7 +41,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $cashier->permissions()->sync($cashierPermissions);
         $this->command->info('Cashier user created/updated.');
 
 
