@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTO\ApiResponse;
+use App\DTO\CustomerDTO;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -49,9 +51,7 @@ class CustomerController extends Controller
      *                     @OA\Property(property="name", type="string", example="John Doe"),
      *                     @OA\Property(property="contact_no", type="string", example="+1234567890"),
      *                     @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                     @OA\Property(property="address", type="string", example="123 Main St"),
-     *                     @OA\Property(property="created_at", type="string", format="date-time"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                     @OA\Property(property="address", type="string", example="123 Main St")
      *                 )
      *             ),
      *             @OA\Property(property="first_page_url", type="string"),
@@ -70,7 +70,12 @@ class CustomerController extends Controller
         $perPage = $request->input('per_page', 15);
         $customers = Customer::latest()->paginate($perPage);
 
-        return response()->json($customers);
+        // Transform data using DTO
+        $transformedData = $customers->through(function ($customer) {
+            return CustomerDTO::fromModel($customer)->toArray();
+        });
+
+        return response()->json($transformedData);
     }
 
     /**
@@ -110,10 +115,8 @@ class CustomerController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            $apiResponse = ApiResponse::error('Validation failed', $validator->errors()->toArray());
+            return response()->json($apiResponse->toArray(), 422);
         }
 
         $search = $request->input('search');
@@ -125,7 +128,12 @@ class CustomerController extends Controller
                 ->orWhere('email', 'like', "%{$search}%");
         })->latest()->paginate($perPage);
 
-        return response()->json($customers);
+        // Transform data using DTO
+        $transformedData = $customers->through(function ($customer) {
+            return CustomerDTO::fromModel($customer)->toArray();
+        });
+
+        return response()->json($transformedData);
     }
 
     /**
@@ -135,18 +143,17 @@ class CustomerController extends Controller
      *     path="/api/customers",
      *     tags={"Customers"},
      *     summary="Create a new customer",
-     *     description="Create a new customer. Requires 'customers.create' permission. Only validated fields (name, contact_no, email, address) are accepted.",
+     *     description="Create a new customer. Requires 'customers.create' permission.",
      *     operationId="storeCustomer",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="Customer data to create",
      *         @OA\JsonContent(
      *             required={"contact_no"},
-     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe", description="Customer name (optional)"),
-     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890", description="Customer contact number (required)"),
-     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john@example.com", description="Customer email (optional, must be unique)"),
-     *             @OA\Property(property="address", type="string", nullable=true, example="123 Main St, City, Country", description="Customer address (optional)")
+     *             @OA\Property(property="name", type="string", maxLength=255, example="John Doe"),
+     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="address", type="string", example="123 Main St")
      *         )
      *     ),
      *     @OA\Response(
@@ -160,25 +167,21 @@ class CustomerController extends Controller
      *                 @OA\Property(property="name", type="string", example="John Doe"),
      *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
      *                 @OA\Property(property="email", type="string", example="john@example.com"),
-     *                 @OA\Property(property="address", type="string", example="123 Main St"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 @OA\Property(property="address", type="string", example="123 Main St")
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="errors", type="object",
-     *                 @OA\Property(property="contact_no", type="array", @OA\Items(type="string", example="The contact no field is required.")),
-     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email has already been taken."))
-     *             )
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object")
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
     public function store(Request $request): JsonResponse
@@ -191,20 +194,24 @@ class CustomerController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            $apiResponse = ApiResponse::error('Validation failed', $validator->errors()->toArray());
+            return response()->json($apiResponse->toArray(), 422);
         }
 
-        // Use only validated fields to prevent mass assignment vulnerabilities
-        $customer = Customer::create($request->only(['name', 'contact_no', 'email', 'address']));
+        // Use only validated fields to prevent mass assignment vulnerability
+        $customer = Customer::create($request->only([
+            'name',
+            'contact_no',
+            'email',
+            'address'
+        ]));
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Customer created successfully',
-            'data' => $customer
-        ], 201);
+        $apiResponse = ApiResponse::success(
+            'Customer created successfully',
+            CustomerDTO::fromModel($customer)->toArray()
+        );
+
+        return response()->json($apiResponse->toArray(), 201);
     }
 
     /**
@@ -224,10 +231,31 @@ class CustomerController extends Controller
      *         required=true,
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Successful operation"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Customer not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Customer not found")
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
-     *     @OA\Response(response=404, description="Customer not found")
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
     public function show(string $id): JsonResponse
@@ -235,16 +263,16 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
 
         if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found'
-            ], 404);
+            $apiResponse = ApiResponse::error('Customer not found');
+            return response()->json($apiResponse->toArray(), 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $customer
-        ]);
+        $apiResponse = ApiResponse::success(
+            'Customer retrieved successfully',
+            CustomerDTO::fromModel($customer)->toArray()
+        );
+
+        return response()->json($apiResponse->toArray());
     }
 
     /**
@@ -254,7 +282,7 @@ class CustomerController extends Controller
      *     path="/api/customers/{id}",
      *     tags={"Customers"},
      *     summary="Update a customer",
-     *     description="Update customer information with partial updates supported. Requires 'customers.update' permission. Only validated fields are accepted.",
+     *     description="Update customer information. Requires 'customers.update' permission.",
      *     operationId="updateCustomer",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -265,13 +293,12 @@ class CustomerController extends Controller
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\RequestBody(
-     *         required=false,
-     *         description="Customer data to update (all fields are optional for partial updates)",
+     *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe Updated", description="Customer name"),
-     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890", description="Customer contact number"),
-     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john.updated@example.com", description="Customer email (must be unique)"),
-     *             @OA\Property(property="address", type="string", nullable=true, example="456 New St, City, Country", description="Customer address")
+     *             @OA\Property(property="name", type="string", maxLength=255, example="John Doe", description="Customer name (optional)"),
+     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890", description="Customer contact number (optional for partial updates)"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Customer email (optional)"),
+     *             @OA\Property(property="address", type="string", example="123 Main St", description="Customer address (optional)")
      *         )
      *     ),
      *     @OA\Response(
@@ -282,17 +309,13 @@ class CustomerController extends Controller
      *             @OA\Property(property="message", type="string", example="Customer updated successfully"),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe Updated"),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
      *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
-     *                 @OA\Property(property="email", type="string", example="john.updated@example.com"),
-     *                 @OA\Property(property="address", type="string", example="456 New St"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St")
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
      *     @OA\Response(
      *         response=404,
      *         description="Customer not found",
@@ -306,43 +329,12 @@ class CustomerController extends Controller
      *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="errors", type="object",
-     *                 @OA\Property(property="contact_no", type="array", @OA\Items(type="string", example="The contact no must not exceed 20 characters.")),
-     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email has already been taken."))
-     *             )
-     *         )
-     *     )
-     * )
-     * 
-     * @OA\Patch(
-     *     path="/api/customers/{id}",
-     *     tags={"Customers"},
-     *     summary="Partially update a customer",
-     *     description="Partially update customer information. Requires 'customers.update' permission. Only validated fields are accepted.",
-     *     operationId="patchCustomer",
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="Customer ID",
-     *         required=true,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=false,
-     *         description="Customer data to update (all fields are optional)",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", maxLength=255, nullable=true, example="John Doe Updated"),
-     *             @OA\Property(property="contact_no", type="string", maxLength=20, example="+1234567890"),
-     *             @OA\Property(property="email", type="string", format="email", maxLength=255, nullable=true, example="john.updated@example.com"),
-     *             @OA\Property(property="address", type="string", nullable=true, example="456 New St, City, Country")
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Customer updated successfully"),
-     *     @OA\Response(response=401, description="Unauthorized - Invalid or missing token"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
-     *     @OA\Response(response=404, description="Customer not found"),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(response=401, description="Unauthorized"),
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
     public function update(Request $request, string $id): JsonResponse
@@ -350,13 +342,10 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
 
         if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found'
-            ], 404);
+            $apiResponse = ApiResponse::error('Customer not found');
+            return response()->json($apiResponse->toArray(), 404);
         }
 
-        // Validation rules - all fields are optional for partial updates
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|nullable|string|max:255',
             'contact_no' => 'sometimes|required|string|max:20',
@@ -365,20 +354,24 @@ class CustomerController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            $apiResponse = ApiResponse::error('Validation failed', $validator->errors()->toArray());
+            return response()->json($apiResponse->toArray(), 422);
         }
 
-        // Use only validated fields to prevent mass assignment vulnerabilities
-        $customer->update($request->only(['name', 'contact_no', 'email', 'address']));
+        // Use only validated fields to prevent mass assignment vulnerability
+        $customer->update($request->only([
+            'name',
+            'contact_no',
+            'email',
+            'address'
+        ]));
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Customer updated successfully',
-            'data' => $customer->fresh()
-        ]);
+        $apiResponse = ApiResponse::success(
+            'Customer updated successfully',
+            CustomerDTO::fromModel($customer->fresh())->toArray()
+        );
+
+        return response()->json($apiResponse->toArray());
     }
 
     /**
@@ -398,10 +391,24 @@ class CustomerController extends Controller
      *         required=true,
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Customer deleted successfully"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Customer deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Customer not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Customer not found")
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
-     *     @OA\Response(response=404, description="Customer not found")
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
     public function destroy(string $id): JsonResponse
@@ -409,18 +416,14 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
 
         if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found'
-            ], 404);
+            $apiResponse = ApiResponse::error('Customer not found');
+            return response()->json($apiResponse->toArray(), 404);
         }
 
         $customer->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Customer deleted successfully'
-        ]);
+        $apiResponse = ApiResponse::success('Customer deleted successfully');
+        return response()->json($apiResponse->toArray());
     }
 
     /**
@@ -447,7 +450,28 @@ class CustomerController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
-     *     @OA\Response(response=200, description="Successful operation"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="current_page", type="integer", example=1),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *                     @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                     @OA\Property(property="address", type="string", example="123 Main St")
+     *                 )
+     *             ),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer")
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
@@ -468,7 +492,12 @@ class CustomerController extends Controller
         $perPage = $request->input('per_page', 15);
         $customers = $query->latest('deleted_at')->paginate($perPage);
 
-        return response()->json($customers);
+        // Transform data using DTO
+        $transformedData = $customers->through(function ($customer) {
+            return CustomerDTO::fromModel($customer)->toArray();
+        });
+
+        return response()->json($transformedData);
     }
 
     /**
@@ -488,10 +517,31 @@ class CustomerController extends Controller
      *         required=true,
      *         @OA\Schema(type="string")
      *     ),
-     *     @OA\Response(response=200, description="Customer restored successfully"),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Customer restored successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer restored successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Customer not found in trash",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Customer not found in trash")
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=403, description="Forbidden - Missing permission"),
-     *     @OA\Response(response=404, description="Customer not found in trash")
+     *     @OA\Response(response=403, description="Forbidden - Missing permission")
      * )
      */
     public function restore(string $id): JsonResponse
@@ -499,18 +549,17 @@ class CustomerController extends Controller
         $customer = Customer::onlyTrashed()->find($id);
 
         if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found in trash'
-            ], 404);
+            $apiResponse = ApiResponse::error('Customer not found in trash');
+            return response()->json($apiResponse->toArray(), 404);
         }
 
         $customer->restore();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Customer restored successfully',
-            'data' => $customer->fresh()
-        ]);
+        $apiResponse = ApiResponse::success(
+            'Customer restored successfully',
+            CustomerDTO::fromModel($customer->fresh())->toArray()
+        );
+
+        return response()->json($apiResponse->toArray());
     }
 }
