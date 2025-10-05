@@ -33,6 +33,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
 
+            // Bank management
+            ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
+            ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
         ];
 
         foreach ($permissions as $permission) {
