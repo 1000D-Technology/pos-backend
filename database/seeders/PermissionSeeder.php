@@ -38,7 +38,6 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
 
 
-
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
 
