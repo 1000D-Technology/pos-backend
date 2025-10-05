@@ -147,7 +147,7 @@ class SupplierController extends Controller
      * )
      * ),
      * @OA\Response(
-     * response=443,
+     * response=422,
      * description="Validation failed"
      * ),
      * @OA\Response(

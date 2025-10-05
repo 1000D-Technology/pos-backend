@@ -38,13 +38,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
 
 
-            //             ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
-            //             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
-            //             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
-            //             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
 
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
 
             // Customer Management
             ['name' => 'Create Customers', 'slug' => 'customers.create', 'description' => 'Add new customers to the system.'],
