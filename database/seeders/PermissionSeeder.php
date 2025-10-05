@@ -49,6 +49,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Search Customers', 'slug' => 'customers.search', 'description' => 'Search customers in the system.'],
             ['name' => 'Restore Customers', 'slug' => 'customers.restore', 'description' => 'Restore deleted customers.'],
 
+            // Bank management
+            ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
+            ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
         ];
 
         foreach ($permissions as $permission) {

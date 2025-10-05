@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
@@ -101,6 +102,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     //supplier delete
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+
+    // Bank routes
+    Route::get('/banks', [BankController::class, 'index'])->middleware('permission:bank.view');
+    Route::post('/banks', [BankController::class, 'store'])->middleware('permission:bank.manage-permissions');
+    Route::get('/banks/{id}', [BankController::class, 'show'])->middleware('permission:bank.view');
+    Route::put('/banks/{id}', [BankController::class, 'update'])->middleware('permission:bank.manage-permissions');
+    Route::delete('/banks/{id}', [BankController::class, 'destroy'])->middleware('permission:bank.manage-permissions');
     // Public Category Routes
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
