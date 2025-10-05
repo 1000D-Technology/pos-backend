@@ -265,7 +265,7 @@ class SupplierController extends Controller
      * description="Supplier not found"
      * ),
      * @OA\Response(
-     * response=443,
+     * response=422,
      * description="Validation failed"
      * ),
      * @OA\Response(
