@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\SalaryController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -91,10 +92,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customers/{id}', [CustomerController::class, 'show'])->middleware('permission:customers.view');
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
+
+    // Salary Routes
+    Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
 });
 
 // Public Category Routes
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-

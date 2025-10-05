@@ -37,7 +37,7 @@ class PermissionSeeder extends Seeder
             // Unit Management
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
 
-          
+
 
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
@@ -54,6 +54,11 @@ class PermissionSeeder extends Seeder
             // Bank management
             ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
             ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
+
+            // Salary Management
+            ['name' => 'Create Salary Slips', 'slug' => 'salaries.create', 'description' => 'Generate salary slips for employees.'],
+            ['name' => 'View Salary Slips', 'slug' => 'salaries.view', 'description' => 'View salary slip records.'],
+            ['name' => 'View Single Salary Slip', 'slug' => 'salaries.show', 'description' => 'View detailed salary slip information.'],
 
         ];
 
