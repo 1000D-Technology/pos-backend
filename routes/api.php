@@ -114,7 +114,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customers/deleted', [CustomerController::class, 'deleted'])
         ->middleware('permission:customers.view');
 
-    Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])
+    Route::patch('/customers/{id}/restore', [CustomerController::class, 'restore'])
         ->middleware('permission:customers.restore');
 
     Route::get('/customers/search', [CustomerController::class, 'search'])

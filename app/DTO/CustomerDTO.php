@@ -31,11 +31,18 @@ class CustomerDTO
 
     /**
      * Create DTO collection from multiple Customer models
+     * 
+     * @param \Illuminate\Support\Collection<int, Customer>|array<Customer> $customers
+     * @return array<int, self>
      */
-    public static function collection($customers): array
+    public static function collection(Collection|array $customers): array
     {
+        if (is_array($customers)) {
+            return array_map(fn($customer) => self::fromModel($customer)->toArray(), $customers);
+        }
+
         return $customers->map(function ($customer) {
-            return self::fromModel($customer);
+            return self::fromModel($customer)->toArray();
         })->toArray();
     }
 

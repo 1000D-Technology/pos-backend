@@ -348,7 +348,7 @@ class CustomerController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|nullable|string|max:255',
-            'contact_no' => 'sometimes|required|string|max:20',
+            'contact_no' => 'required|string|max:20',
             'email' => 'sometimes|nullable|email|max:255|unique:customers,email,' . $id,
             'address' => 'sometimes|nullable|string',
         ]);
@@ -503,10 +503,10 @@ class CustomerController extends Controller
     /**
      * Restore a soft deleted customer.
      *
-     * @OA\Post(
+     * @OA\Patch(
      *     path="/api/customers/{id}/restore",
      *     summary="Restore a deleted customer",
-     *     description="Restore a soft deleted customer. Requires 'customers.restore' permission.",
+     *     description="Restore a soft deleted customer. Requires 'customers.restore' permission. Uses PATCH method as it's an update operation that modifies resource state.",
      *     operationId="restoreCustomer",
      *     tags={"Customers"},
      *     security={{"bearerAuth":{}}},
