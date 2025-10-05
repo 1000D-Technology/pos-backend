@@ -32,6 +32,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
+    Artisan::call('l5-swagger:generate');
+    Artisan::call('migrate:fresh', [
+        '--seed' => true
+    ]);
 
     return response()->json([
         'status' => 'success',
