@@ -38,11 +38,11 @@ class CustomerDTO
     public static function collection(Collection|array $customers): array
     {
         if (is_array($customers)) {
-            return array_map(fn($customer) => self::fromModel($customer)->toArray(), $customers);
+            return array_map(fn($customer) => $customer->only(['id', 'name', 'contact_no', 'email', 'address']), $customers);
         }
 
         return $customers->map(function ($customer) {
-            return self::fromModel($customer)->toArray();
+            return $customer->only(['id', 'name', 'contact_no', 'email', 'address']);
         })->toArray();
     }
 
