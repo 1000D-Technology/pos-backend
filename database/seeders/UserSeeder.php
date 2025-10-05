@@ -40,7 +40,6 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-
         $this->command->info('Cashier user created/updated.');
 
 
