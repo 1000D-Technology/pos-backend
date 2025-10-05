@@ -20,7 +20,14 @@ class CompanyController extends Controller
      * @OA\Get(
      * path="/api/company",
      * tags={"Companies"},
-     * summary="Retrieve a list of all active companies (id, name, email)",
+     * summary="Retrieve a paginated list of all active companies, with optional name search.",
+     * @OA\Parameter(
+     * name="search",
+     * in="query",
+     * description="Search term for filtering companies by name.",
+     * required=false,
+     * @OA\Schema(type="string")
+     * ),
      * @OA\Response(
      * response=200,
      * description="Company list retrieved successfully.",
@@ -36,14 +43,24 @@ class CompanyController extends Controller
      * )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $company = Company::select('id', 'name', 'email')->get();
-        if(!$company->isEmpty()){
-            return response()->json(ApiResponse::success('Company fetched successfully', $company)->toArray(), 200);
-        }else{
+        $query = Company::select('id', 'name', 'email');
+        $search = $request->query('search');
+
+        if ($search) {
+            // Apply search filter to name column (case-insensitive search)
+            $query->where('name', 'LIKE', '%' . $search . '%');
+        }
+
+        // Use pagination for index method (best practice)
+        $companies = $query->paginate(15);
+
+        if($companies->isEmpty()){
             return response()->json(ApiResponse::error('No company found', null, 404)->toArray(), 404);
         }
+
+        return response()->json(ApiResponse::success('Company fetched successfully', $companies)->toArray(), 200);
     }
 
     /**
