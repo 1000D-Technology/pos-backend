@@ -71,7 +71,11 @@ class UserController extends Controller
      *             @OA\Property(property="name", type="string", example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="secret123"),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="secret123")
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="secret123"),
+     *             @OA\Property(property="nic", type="string", example="123456789V"),
+     *             @OA\Property(property="basic_salary", type="number", format="float", example=50000.00),
+     *             @OA\Property(property="contact_no", type="string", example="+1234567890"),
+     *             @OA\Property(property="address", type="string", example="123 Main St, City")
      *         )
      *     ),
      *     @OA\Response(
@@ -91,15 +95,23 @@ class UserController extends Controller
               'name' => 'required|string|max:255',
               'email' => 'required|string|email|max:255|unique:users',
               'password' => 'required|string|min:8|confirmed',
+              'nic' => 'nullable|string|max:255',
+              'basic_salary' => 'nullable|numeric|min:0',
+              'contact_no' => 'nullable|string|max:20',
+              'address' => 'nullable|string',
          ]);
 
         $user = User::create([
               'name' => $request->name,
               'email' => $request->email,
               'password' => bcrypt($request->password),
+              'nic' => $request->nic,
+              'basic_salary' => $request->basic_salary,
+              'contact_no' => $request->contact_no,
+              'address' => $request->address,
          ]);
 
-         $data = new UserDTO($user->id, $user->name, $user->email);
+         $data = new UserDTO($user->id, $user->name, $user->email, $user->nic, $user->basic_salary, $user->contact_no, $user->address);
          return response()->json($data, 201);
     }
 
@@ -132,7 +144,7 @@ class UserController extends Controller
     public function show(string $id)
     {
         $user = User::findOrFail($id);
-        $data = new UserDTO($user->id, $user->name, $user->email);
+        $data = new UserDTO($user->id, $user->name, $user->email, $user->nic, $user->basic_salary, $user->contact_no, $user->address);
         return response()->json($data);
     }
 
@@ -157,7 +169,11 @@ class UserController extends Controller
      *             @OA\Property(property="name", type="string", example="Jane Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="jane@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="newsecret123"),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newsecret123")
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newsecret123"),
+     *             @OA\Property(property="nic", type="string", example="987654321V"),
+     *             @OA\Property(property="basic_salary", type="number", format="float", example=60000.00),
+     *             @OA\Property(property="contact_no", type="string", example="+0987654321"),
+     *             @OA\Property(property="address", type="string", example="456 New Street, Town")
      *         )
      *     ),
      *     @OA\Response(
@@ -183,6 +199,10 @@ class UserController extends Controller
               'name' => 'sometimes|required|string|max:255',
               'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$user->id,
               'password' => 'sometimes|required|string|min:8|confirmed',
+              'nic' => 'nullable|string|max:255',
+              'basic_salary' => 'nullable|numeric|min:0',
+              'contact_no' => 'nullable|string|max:20',
+              'address' => 'nullable|string',
          ]);
 
         if ($request->has('name')) {
@@ -194,9 +214,21 @@ class UserController extends Controller
         if ($request->has('password')) {
               $user->password = bcrypt($request->password);
          }
+        if ($request->has('nic')) {
+              $user->nic = $request->nic;
+         }
+        if ($request->has('basic_salary')) {
+              $user->basic_salary = $request->basic_salary;
+         }
+        if ($request->has('contact_no')) {
+              $user->contact_no = $request->contact_no;
+         }
+        if ($request->has('address')) {
+              $user->address = $request->address;
+         }
         $user->save();
 
-        $data = new UserDTO($user->id, $user->name, $user->email);
+        $data = new UserDTO($user->id, $user->name, $user->email, $user->nic, $user->basic_salary, $user->contact_no, $user->address);
         return response()->json($data);
     }
 
