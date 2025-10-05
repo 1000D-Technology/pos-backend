@@ -37,7 +37,6 @@ class PermissionSeeder extends Seeder
             // Unit Management
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
 
-          
 
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
@@ -55,6 +54,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
             ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
 
+            // Company management
+            ['name' => 'Company Permission', 'slug' => 'company.manage-permissions', 'description' => 'Assign or revoke permissions from company.'],
+            ['name' => 'View company', 'slug' => 'company.view', 'description' => 'View the list of system company.'],
         ];
 
         foreach ($permissions as $permission) {
