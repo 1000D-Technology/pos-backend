@@ -40,11 +40,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        // Assign specific permissions to the cashier
-        $cashierPermissions = [
-         
-            $permissions['products.view']->id,
-        ];
+
         $cashier->permissions()->sync($cashierPermissions);
         $this->command->info('Cashier user created/updated.');
 

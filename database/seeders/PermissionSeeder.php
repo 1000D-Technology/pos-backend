@@ -13,7 +13,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Seeding Permissions...');
-        
+
         $permissions = [
             // User Management
             ['name' => 'Manage User Permissions', 'slug' => 'users.manage-permissions', 'description' => 'Assign or revoke permissions from users.'],
@@ -25,16 +25,38 @@ class PermissionSeeder extends Seeder
             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
 
-            // Product Management
-            ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
-            ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
-            ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
-            ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
+            // Supplier management
+            ['name' => 'Create Suppliers', 'slug' => 'suppliers.create', 'description' => 'Add new suppliers to the system.'],
+            ['name' => 'Update Suppliers', 'slug' => 'suppliers.update', 'description' => 'Edit existing supplier details.'],
+            ['name' => 'Delete Suppliers', 'slug' => 'suppliers.delete', 'description' => 'Remove suppliers from the system.'],
+            ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
+            ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
+
+          
 
             // Unit Management
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
           
           
+            //             ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
+            //             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
+            //             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
+            //             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
+
+            //Category Management
+            ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
+            // Customer Management
+            ['name' => 'Create Customers', 'slug' => 'customers.create', 'description' => 'Add new customers to the system.'],
+            ['name' => 'Update Customers', 'slug' => 'customers.update', 'description' => 'Edit existing customer details.'],
+            ['name' => 'Delete Customers', 'slug' => 'customers.delete', 'description' => 'Remove customers from the system.'],
+            ['name' => 'View Customers', 'slug' => 'customers.view', 'description' => 'View the list of customers.'],
+            ['name' => 'Search Customers', 'slug' => 'customers.search', 'description' => 'Search customers in the system.'],
+            ['name' => 'Restore Customers', 'slug' => 'customers.restore', 'description' => 'Restore deleted customers.'],
+
+            // Bank management
+            ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
+            ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
         ];
 
         foreach ($permissions as $permission) {
