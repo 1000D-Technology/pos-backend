@@ -32,13 +32,16 @@ class PermissionSeeder extends Seeder
             ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
-          
+
 
             // Unit Management
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
+
           
+
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
 
             // Customer Management
             ['name' => 'Create Customers', 'slug' => 'customers.create', 'description' => 'Add new customers to the system.'],
@@ -51,6 +54,7 @@ class PermissionSeeder extends Seeder
             // Bank management
             ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
             ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
+
         ];
 
         foreach ($permissions as $permission) {

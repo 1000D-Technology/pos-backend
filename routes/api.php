@@ -1,3 +1,4 @@
+```php
 <?php
 
 use App\Http\Controllers\Api\AuthController;
@@ -13,8 +14,6 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UnitController;
 
-
-
 Route::get('/login', function () {
     return response()->json([
         'message' => 'Unauthorized',
@@ -22,9 +21,8 @@ Route::get('/login', function () {
     ], 401);
 })->name('login');
 
-// Route for user login (generates a token)
+// User login (generates a token)
 Route::post('/login', [AuthController::class, 'login']);
-
 
 Route::get('/deploy/fix', function () {
     Artisan::call('config:clear');
@@ -35,42 +33,40 @@ Route::get('/deploy/fix', function () {
     Artisan::call('route:cache');
     Artisan::call('view:cache');
 
-
     return response()->json([
         'status' => 'success',
         'message' => 'All artisan commands executed!'
     ]);
 });
 
-
-
-// Group all routes that require a valid authentication token (Sanctum)
+// Routes requiring Sanctum authentication
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Authenticated user's own data
+    // Authenticated user info
     Route::get('/user', fn(Request $request) => $request->user());
 
-    // User Management Routes (require authentication AND specific permissions)
+    // User Management
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view');
     Route::get('/users/{id}', [UserController::class, 'show'])->middleware('permission:users.view');
     Route::put('/users/{id}', [UserController::class, 'update'])->middleware('permission:users.manage-permissions');
     Route::get('/users/{user}/permissions', [UserPermissionController::class, 'index'])->middleware('permission:users.view');
     Route::post('/users/{user}/permissions', [UserPermissionController::class, 'sync'])->middleware('permission:users.manage-permissions');
 
-    // Unit Management Routes
+    // Unit Management
     Route::get('/units', [UnitController::class, 'index']);
     Route::post('/units', [UnitController::class, 'store'])->middleware('permission:units.create');
     Route::get('/units/{id}', [UnitController::class, 'show'])->middleware('permission:units.view');
     Route::put('/units/{id}', [UnitController::class, 'update'])->middleware('permission:units.update');
     Route::delete('/units/{id}', [UnitController::class, 'destroy'])->middleware('permission:units.delete');
 
-    // Supplier Routes
+    // Supplier Management
     Route::get('/suppliers/search', [SupplierController::class, 'search'])->middleware('permission:suppliers.view');
     Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view');
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('permission:suppliers.create');
     Route::get('/suppliers/{id}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+
 
     // Bank Routes
     Route::get('/banks', [BankController::class, 'index'])->middleware('permission:bank.view');
@@ -79,14 +75,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/banks/{id}', [BankController::class, 'update'])->middleware('permission:bank.manage-permissions');
     Route::delete('/banks/{id}', [BankController::class, 'destroy'])->middleware('permission:bank.manage-permissions');
 
-    // Category Routes - Protected
+    // Category Routes (protected)
     Route::get('/categories/deleted', [CategoryController::class, 'deleted'])->middleware('permission:categories.manage');
     Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])->middleware('permission:categories.manage');
     Route::post('/categories/bulk-restore', [CategoryController::class, 'bulkRestore'])->middleware('permission:categories.manage');
     Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])->middleware('permission:categories.manage');
     Route::apiResource('categories', CategoryController::class)->except(['index', 'show'])->middleware('permission:categories.manage');
 
-    // Customer Routes - Protected
+    // Customer Routes
     Route::get('/customers/deleted', [CustomerController::class, 'deleted'])->middleware('permission:customers.view');
     Route::patch('/customers/{id}/restore', [CustomerController::class, 'restore'])->middleware('permission:customers.restore');
     Route::get('/customers/search', [CustomerController::class, 'search'])->middleware('permission:customers.search');
@@ -97,7 +93,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 });
 
-// Public Category Routes - These don't require authentication
+// Public Category Routes
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
