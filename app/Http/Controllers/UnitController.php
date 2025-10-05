@@ -57,17 +57,13 @@ class UnitController extends Controller
         // SoftDeletes trait automatically excludes soft-deleted records from query()
         $query = Unit::query();
 
-        if ($search = $request->get('search')) {
-            $query->where(function($q) use ($search) {
-                // Using ILIKE for case-insensitive search (PostgreSQL)
-                // For MySQL, you might use 'LIKE' and ensure collation is case-insensitive,
-                // or use ->whereRaw("LOWER(name) LIKE ?", ['%' . strtolower($search) . '%'])
-                $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('symbol', 'ILIKE', "%{$search}%");
+            if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $searchLower = strtolower($search);
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . $searchLower . '%'])
+                  ->orWhereRaw('LOWER(symbol) LIKE ?', ['%' . $searchLower . '%']);
             });
-        }
-
-        $units = $query->orderBy('name')->get();
+        }        $units = $query->orderBy('name')->get();
         return response()->json($units);
     }
 
@@ -296,6 +292,90 @@ class UnitController extends Controller
         return response()->json(['message' => 'Unit soft deleted successfully']);
     }
 
-    // The separate 'search' method has been removed as per your request,
-    // and its functionality is now integrated into the 'index' method.
+    /**
+     * @OA\Get(
+     *     path="/api/units/search",
+     *     summary="Search units by name or symbol",
+     *     tags={"Units"},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         required=false,
+     *         description="Search term for filtering units",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         required=false,
+     *         description="Number of items per page",
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful search results"
+     *     )
+     * )
+     */
+    public function search(Request $request)
+    {
+        try {
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'search' => 'nullable|string|max:255',
+                'per_page' => 'nullable|integer|min:1|max:100'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Build the query
+            $query = Unit::query();
+            $searchTerm = $request->input('search');
+            $perPage = $request->input('per_page', 10);
+
+            if ($searchTerm) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $searchLower = strtolower($searchTerm);
+                    $q->whereRaw('LOWER(name) LIKE ?', ['%' . $searchLower . '%'])
+                      ->orWhereRaw('LOWER(symbol) LIKE ?', ['%' . $searchLower . '%']);
+                });
+            }
+
+            // Execute the query with pagination
+            $units = $query->orderBy('name')
+                ->paginate($perPage);
+
+            // Format the response
+            return response()->json([
+                'status' => true,
+                'message' => $units->total() > 0 ? 'Units retrieved successfully' : 'No units found',
+                'data' => [
+                    'current_page' => $units->currentPage(),
+                    'data' => $units->items(),
+                    'first_page_url' => $units->url(1),
+                    'from' => $units->firstItem(),
+                    'last_page' => $units->lastPage(),
+                    'last_page_url' => $units->url($units->lastPage()),
+                    'next_page_url' => $units->nextPageUrl(),
+                    'path' => $units->path(),
+                    'per_page' => $units->perPage(),
+                    'prev_page_url' => $units->previousPageUrl(),
+                    'to' => $units->lastItem(),
+                    'total' => $units->total()
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while searching units',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
 }

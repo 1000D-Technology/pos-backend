@@ -60,14 +60,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // Unit Management Routes
-
-    Route::get('units', [UnitController::class, 'index'])->middleware('permission:unit.view');
-
-
+    Route::get('units/search', [UnitController::class, 'index']); // If you want to keep a dedicated search endpoint
+    Route::get('units', [UnitController::class, 'index']);
     Route::get('units/{unit}', [UnitController::class, 'show'])->middleware('permission:unit.view');
-
-
-    Route::apiResource('units', UnitController::class)
-        ->except(['index', 'show'])
-        ->middleware('permission:unit.manage');
+    Route::resource('units', UnitController::class)->except(['index', 'show']);
 });
