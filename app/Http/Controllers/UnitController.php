@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\ApiResponse;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule; // Add this line
+use Illuminate\Validation\Rule;
 
 /**
  * @OA\Tag(
@@ -26,13 +27,13 @@ class UnitController extends Controller
     /**
      * @OA\Get(
      *     path="/api/units",
-     *     summary="List all active units or search units by name/symbol", // Updated summary
+     *     summary="List all active units or search units by name or symbol",
      *     tags={"Units"},
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         required=false,
-     *         description="Optional search term for filtering units by name or symbol. Excludes soft-deleted units.", // Updated description
+     *         description="Optional search term for filtering units by name or symbol. Excludes soft-deleted units.",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
@@ -57,14 +58,18 @@ class UnitController extends Controller
         // SoftDeletes trait automatically excludes soft-deleted records from query()
         $query = Unit::query();
 
-            if ($search = $request->get('search')) {
+        if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $searchLower = strtolower($search);
                 $q->whereRaw('LOWER(name) LIKE ?', ['%' . $searchLower . '%'])
                   ->orWhereRaw('LOWER(symbol) LIKE ?', ['%' . $searchLower . '%']);
             });
-        }        $units = $query->orderBy('name')->get();
-        return response()->json($units);
+        }
+        
+        $units = $query->orderBy('name')->get();
+        return response()->json(
+            ApiResponse::success('Units retrieved successfully', $units)->toArray()
+        );
     }
 
 
@@ -124,11 +129,17 @@ class UnitController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(
+                ApiResponse::error('Validation failed', $validator->errors()->toArray())->toArray(),
+                422
+            );
         }
 
         $unit = Unit::create($request->all());
-        return response()->json($unit, 201);
+        return response()->json(
+            ApiResponse::success('Unit created successfully', $unit)->toArray(),
+            201
+        );
     }
 
 
@@ -168,10 +179,15 @@ class UnitController extends Controller
         $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
-            return response()->json(['message' => 'Unit not found'], 404);
+            return response()->json(
+                ApiResponse::error('Unit not found')->toArray(),
+                404
+            );
         }
 
-        return response()->json($unit);
+        return response()->json(
+            ApiResponse::success('Unit retrieved successfully', $unit)->toArray()
+        );
     }
 
 
@@ -223,7 +239,10 @@ class UnitController extends Controller
         $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
-            return response()->json(['message' => 'Unit not found'], 404);
+            return response()->json(
+                ApiResponse::error('Unit not found')->toArray(),
+                404
+            );
         }
 
         $validator = Validator::make($request->all(), [
@@ -246,11 +265,16 @@ class UnitController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(
+                ApiResponse::error('Validation failed', $validator->errors()->toArray())->toArray(),
+                422
+            );
         }
 
         $unit->update($request->all());
-        return response()->json($unit);
+        return response()->json(
+            ApiResponse::success('Unit updated successfully', $unit)->toArray()
+        );
     }
 
     /**
@@ -285,11 +309,16 @@ class UnitController extends Controller
         $unit = Unit::find($id); // find() automatically excludes soft-deleted records
 
         if (!$unit) {
-            return response()->json(['message' => 'Unit not found'], 404);
+            return response()->json(
+                ApiResponse::error('Unit not found')->toArray(),
+                404
+            );
         }
 
         $unit->delete(); // This will soft delete the unit
-        return response()->json(['message' => 'Unit soft deleted successfully']);
+        return response()->json(
+            ApiResponse::success('Unit soft deleted successfully')->toArray()
+        );
     }
 
     /**
@@ -317,65 +346,5 @@ class UnitController extends Controller
      *     )
      * )
      */
-    public function search(Request $request)
-    {
-        try {
-            // Validate the request
-            $validator = Validator::make($request->all(), [
-                'search' => 'nullable|string|max:255',
-                'per_page' => 'nullable|integer|min:1|max:100'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // Build the query
-            $query = Unit::query();
-            $searchTerm = $request->input('search');
-            $perPage = $request->input('per_page', 10);
-
-            if ($searchTerm) {
-                $query->where(function ($q) use ($searchTerm) {
-                    $searchLower = strtolower($searchTerm);
-                    $q->whereRaw('LOWER(name) LIKE ?', ['%' . $searchLower . '%'])
-                      ->orWhereRaw('LOWER(symbol) LIKE ?', ['%' . $searchLower . '%']);
-                });
-            }
-
-            // Execute the query with pagination
-            $units = $query->orderBy('name')
-                ->paginate($perPage);
-
-            // Format the response
-            return response()->json([
-                'status' => true,
-                'message' => $units->total() > 0 ? 'Units retrieved successfully' : 'No units found',
-                'data' => [
-                    'current_page' => $units->currentPage(),
-                    'data' => $units->items(),
-                    'first_page_url' => $units->url(1),
-                    'from' => $units->firstItem(),
-                    'last_page' => $units->lastPage(),
-                    'last_page_url' => $units->url($units->lastPage()),
-                    'next_page_url' => $units->nextPageUrl(),
-                    'path' => $units->path(),
-                    'per_page' => $units->perPage(),
-                    'prev_page_url' => $units->previousPageUrl(),
-                    'to' => $units->lastItem(),
-                    'total' => $units->total()
-                ]
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'An error occurred while searching units',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
-        }
-    }
+   
 }
