@@ -32,7 +32,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
-            // Product Management
+          
+
+            // Unit Management
+            ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
+          
+          
             //             ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
             //             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
             //             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
