@@ -32,6 +32,22 @@ class PermissionSeeder extends Seeder
             ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
+            // Product Management
+            //             ['name' => 'Create Products', 'slug' => 'products.create', 'description' => 'Add new products to the system.'],
+            //             ['name' => 'Update Products', 'slug' => 'products.update', 'description' => 'Edit existing product details.'],
+            //             ['name' => 'Delete Products', 'slug' => 'products.delete', 'description' => 'Remove products from the system.'],
+            //             ['name' => 'View Products', 'slug' => 'products.view', 'description' => 'View the list of products.'],
+
+            //Category Management
+            ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
+
+            // Customer Management
+            ['name' => 'Create Customers', 'slug' => 'customers.create', 'description' => 'Add new customers to the system.'],
+            ['name' => 'Update Customers', 'slug' => 'customers.update', 'description' => 'Edit existing customer details.'],
+            ['name' => 'Delete Customers', 'slug' => 'customers.delete', 'description' => 'Remove customers from the system.'],
+            ['name' => 'View Customers', 'slug' => 'customers.view', 'description' => 'View the list of customers.'],
+            ['name' => 'Search Customers', 'slug' => 'customers.search', 'description' => 'Search customers in the system.'],
+            ['name' => 'Restore Customers', 'slug' => 'customers.restore', 'description' => 'Restore deleted customers.'],
 
             // Bank management
             ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],

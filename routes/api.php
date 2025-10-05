@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -56,7 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- POS Product Routes ---
     Route::get('/products', function () {
-        return response()->json(['message' => 'Viewing all products.'],status: 200);
+        return response()->json(['message' => 'Viewing all products.'], status: 200);
     })->middleware('permission:products.view');
 
     // Protected routes using the 'permission' middleware
@@ -73,6 +75,19 @@ Route::middleware('auth:sanctum')->group(function () {
     })->middleware('permission:products.delete');
 
 
+    // Protected Category Routes (Create, Update, Delete, Restore, Bulk Operations)
+    // Note: Order matters - specific routes must come before parameterized routes
+    Route::get('/categories/deleted', [CategoryController::class, 'deleted'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/bulk-restore', [CategoryController::class, 'bulkRestore'])
+        ->middleware('permission:categories.manage');
+
+    Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])
+        ->middleware('permission:categories.manage');
     //supplier routes
 
     //search by name
@@ -94,4 +109,43 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/banks/{id}', [BankController::class, 'show'])->middleware('permission:bank.view');
     Route::put('/banks/{id}', [BankController::class, 'update'])->middleware('permission:bank.manage-permissions');
     Route::delete('/banks/{id}', [BankController::class, 'destroy'])->middleware('permission:bank.manage-permissions');
+    // Public Category Routes
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::get('/categories/search/query', [CategoryController::class, 'search']);
+
+    Route::apiResource('categories', CategoryController::class)
+        ->except(['index', 'show'])
+        ->middleware('permission:categories.manage');
+
+    // Customer Routes - Protected with specific permissions
+    Route::get('/customers/deleted', [CustomerController::class, 'deleted'])
+        ->middleware('permission:customers.view');
+
+    Route::patch('/customers/{id}/restore', [CustomerController::class, 'restore'])
+        ->middleware('permission:customers.restore');
+
+    Route::get('/customers/search', [CustomerController::class, 'search'])
+        ->middleware('permission:customers.search');
+
+    Route::get('/customers', [CustomerController::class, 'index'])
+        ->middleware('permission:customers.view');
+
+    Route::post('/customers', [CustomerController::class, 'store'])
+        ->middleware('permission:customers.create');
+
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])
+        ->middleware('permission:customers.view');
+
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])
+        ->middleware('permission:customers.update');
+
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])
+        ->middleware('permission:customers.delete');
 });
+
+// Public Category Routes - These don't require authentication
+// Note: Search must come before {id} route to avoid route conflicts
+Route::get('/categories/search', [CategoryController::class, 'search']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
