@@ -58,6 +58,10 @@ class PermissionSeeder extends Seeder
             // Company management
             ['name' => 'Company Permission', 'slug' => 'company.manage-permissions', 'description' => 'Assign or revoke permissions from company.'],
             ['name' => 'View company', 'slug' => 'company.view', 'description' => 'View the list of system company.'],
+
+            // Company bank account management
+            ['name' => 'Manage Company Bank Accounts', 'slug' => 'company-bank.manage', 'description' => 'Create/Update/Delete company bank accounts.'],
+            ['name' => 'View Company Bank Accounts', 'slug' => 'company-bank.view', 'description' => 'View the list of company bank accounts.'],
         ];
 
         foreach ($permissions as $permission) {

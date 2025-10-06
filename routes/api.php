@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\CompanyBankAccountController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -92,12 +93,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Company Bank Account Routes
+    Route::get('/company/bank-accounts', [CompanyBankAccountController::class, 'index'])->middleware('permission:company-bank.view');
+    Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
+    Route::delete('/company/bank-accounts/{id}', [CompanyBankAccountController::class, 'destroy'])->middleware('permission:company-bank.manage');
+
     // Company Routes
     Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
     Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
     Route::get('/company/{id}', [CompanyController::class, 'show'])->middleware('permission:company.view');
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
+
+
 });
 
 // Public Category Routes
