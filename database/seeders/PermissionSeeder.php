@@ -57,6 +57,10 @@ class PermissionSeeder extends Seeder
             // Company management
             ['name' => 'Company Permission', 'slug' => 'company.manage-permissions', 'description' => 'Assign or revoke permissions from company.'],
             ['name' => 'View company', 'slug' => 'company.view', 'description' => 'View the list of system company.'],
+            
+            // Attendance management
+            ['name' => 'Manage Attendances', 'slug' => 'attendances.manage', 'description' => 'Create/Update/Delete/View attendances.'],
+
         ];
 
         foreach ($permissions as $permission) {

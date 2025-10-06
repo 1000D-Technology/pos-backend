@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CompanyController;
-use App\Models\User;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -102,6 +102,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/company/{id}', [CompanyController::class, 'show'])->middleware('permission:company.view');
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
+
+    // Attendance Management
+    // Admin-managed attendance CRUD. Permission slug: attendances.manage
+    Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
 });
 
 // Public Category Routes

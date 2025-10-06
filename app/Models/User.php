@@ -58,6 +58,14 @@ class User extends Authenticatable
         return $this->belongsToMany(Permission::class);
     }
 
+    /**
+     * User attendances relationship
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
     public function hasPermissionTo(string $permissionSlug): bool
     {
         $permissions = Cache::remember(
