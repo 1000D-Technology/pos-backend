@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -96,6 +97,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Staff Routes
+    Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
+   
     // Company Routes
     Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
     Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
@@ -108,4 +112,3 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-
