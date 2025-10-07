@@ -10,6 +10,8 @@ use App\Http\Requests\StoreAttendanceRequest;
 use App\Http\Requests\UpdateAttendanceRequest;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
+use App\DTO\ApiResponse;
+use App\DTO\AttendanceDTO;
 
 /**
  * @OA\Tag(
@@ -82,44 +84,24 @@ class AttendanceController extends Controller
                 ];
             }, $results->items());
 
-            return response()->json([
-                'success' => true,
-                'data' => $data,
+            return response()->json(ApiResponse::success('Attendance list retrieved', [
+                'data' => array_map(fn($a) => (new AttendanceDTO($a))->toArray(), $results->items()),
                 'meta' => [
                     'current_page' => $results->currentPage(),
                     'last_page' => $results->lastPage(),
                     'per_page' => $results->perPage(),
                     'total' => $results->total(),
                 ]
-            ], 200);
+            ])->toArray(), 200);
         }
 
         $results = $query->get();
-        $data = $results->map(function($a) {
-            return [
-                'id' => $a->id,
-                'user' => $a->user ? [
-                    'id' => $a->user->id,
-                    'name' => $a->user->name,
-                    'email' => $a->user->email,
-                    'nic' => $a->user->nic ?? null,
-                    'basic_salary' => $a->user->basic_salary ?? null,
-                    'contact_no' => $a->user->contact_no ?? null,
-                    'address' => $a->user->address ?? null,
-                ] : null,
-                'attendance_date' => optional($a->attendance_date)->format('Y-m-d') ?? null,
-                'status' => $a->status,
-                'total_hours' => $a->total_hours,
-                'note' => $a->note,
-                'created_at' => optional($a->created_at)->toDateTimeString(),
-                'updated_at' => optional($a->updated_at)->toDateTimeString(),
-            ];
-        })->all();
 
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ], 200);
+        $data = array_map(function($a) {
+            return (new AttendanceDTO($a))->toArray();
+        }, $results->all());
+
+        return response()->json(ApiResponse::success('Attendance list retrieved', $data)->toArray(), 200);
     }
 
     /**
@@ -149,28 +131,8 @@ class AttendanceController extends Controller
         try {
             $attendance = Attendance::create($data);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Attendance created successfully',
-                'data' => [
-                    'id' => $attendance->id,
-                    'user' => $attendance->user ? [
-                        'id' => $attendance->user->id,
-                        'name' => $attendance->user->name,
-                        'email' => $attendance->user->email,
-                        'nic' => $attendance->user->nic ?? null,
-                        'basic_salary' => $attendance->user->basic_salary ?? null,
-                        'contact_no' => $attendance->user->contact_no ?? null,
-                        'address' => $attendance->user->address ?? null,
-                    ] : null,
-                    'attendance_date' => optional($attendance->attendance_date)->format('Y-m-d') ?? null,
-                    'status' => $attendance->status,
-                    'total_hours' => $attendance->total_hours,
-                    'note' => $attendance->note,
-                    'created_at' => optional($attendance->created_at)->toDateTimeString(),
-                    'updated_at' => optional($attendance->updated_at)->toDateTimeString(),
-                ]
-            ], 201);
+            $dto = new AttendanceDTO($attendance);
+            return response()->json(ApiResponse::success('Attendance created successfully', $dto->toArray())->toArray(), 201);
 
         } catch (QueryException $e) {
             // Handle duplicate unique constraint and other DB errors
@@ -179,21 +141,14 @@ class AttendanceController extends Controller
 
             // MySQL duplicate entry: SQLSTATE 23000 and error code 1062
             if ($sqlState === '23000' || $errorCode === 1062 || stripos($e->getMessage(), 'duplicate') !== false || stripos($e->getMessage(), 'unique') !== false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An attendance record for this user on the specified date already exists.'
-                ], 409);
+                return response()->json(ApiResponse::error('An attendance record for this user on the specified date already exists.')->toArray(), 409);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Database error while creating attendance',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(ApiResponse::error('Database error while creating attendance', [$e->getMessage()])->toArray(), 500);
         } catch (ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Validation Error', 'errors' => $e->errors()], 422);
+            return response()->json(ApiResponse::error('Validation Error', $e->errors())->toArray(), 422);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error creating attendance', 'error' => $e->getMessage()], 500);
+            return response()->json(ApiResponse::error('Error creating attendance', [$e->getMessage()])->toArray(), 500);
         }
     }
 
@@ -228,31 +183,12 @@ class AttendanceController extends Controller
         $results = $query->get();
 
         if ($results->isEmpty()) {
-            return response()->json(['success' => true, 'data' => []], 200);
+            return response()->json(ApiResponse::success('No attendances found', [])->toArray(), 200);
         }
 
-        $data = $results->map(function($a) {
-            return [
-                'id' => $a->id,
-                'user' => $a->user ? [
-                    'id' => $a->user->id,
-                    'name' => $a->user->name,
-                    'email' => $a->user->email,
-                    'nic' => $a->user->nic ?? null,
-                    'basic_salary' => $a->user->basic_salary ?? null,
-                    'contact_no' => $a->user->contact_no ?? null,
-                    'address' => $a->user->address ?? null,
-                ] : null,
-                'attendance_date' => optional($a->attendance_date)->format('Y-m-d') ?? null,
-                'status' => $a->status,
-                'total_hours' => $a->total_hours,
-                'note' => $a->note,
-                'created_at' => optional($a->created_at)->toDateTimeString(),
-                'updated_at' => optional($a->updated_at)->toDateTimeString(),
-            ];
-        })->all();
+        $data = array_map(fn($a) => (new AttendanceDTO($a))->toArray(), $results->all());
 
-        return response()->json(['success' => true, 'data' => $data], 200);
+        return response()->json(ApiResponse::success('Attendances retrieved', $data)->toArray(), 200);
     }
 
     /**
@@ -288,24 +224,8 @@ class AttendanceController extends Controller
         try {
             $attendance->save();
 
-            return response()->json(['success' => true, 'message' => 'Attendance updated successfully', 'data' => [
-                'id' => $attendance->id,
-                'user' => $attendance->user ? [
-                    'id' => $attendance->user->id,
-                    'name' => $attendance->user->name,
-                    'email' => $attendance->user->email,
-                    'nic' => $attendance->user->nic ?? null,
-                    'basic_salary' => $attendance->user->basic_salary ?? null,
-                    'contact_no' => $attendance->user->contact_no ?? null,
-                    'address' => $attendance->user->address ?? null,
-                ] : null,
-                'attendance_date' => optional($attendance->attendance_date)->format('Y-m-d') ?? null,
-                'status' => $attendance->status,
-                'total_hours' => $attendance->total_hours,
-                'note' => $attendance->note,
-                'created_at' => optional($attendance->created_at)->toDateTimeString(),
-                'updated_at' => optional($attendance->updated_at)->toDateTimeString(),
-            ]], 200);
+            $dto = new AttendanceDTO($attendance);
+            return response()->json(ApiResponse::success('Attendance updated successfully', $dto->toArray())->toArray(), 200);
 
         } catch (QueryException $e) {
             $sqlState = $e->errorInfo[0] ?? null;
@@ -347,7 +267,7 @@ class AttendanceController extends Controller
         try {
             // Soft delete
             $attendance->delete();
-            return response()->json(['success' => true, 'message' => 'Attendance soft-deleted successfully'], 200);
+            return response()->json(ApiResponse::success('Attendance soft-deleted successfully')->toArray(), 200);
         } catch (QueryException $e) {
             return response()->json(['success' => false, 'message' => 'Database error while deleting attendance', 'error' => $e->getMessage()], 500);
         } catch (\Exception $e) {
