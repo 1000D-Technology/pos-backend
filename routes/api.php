@@ -94,7 +94,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
     // Staff Routes
-    Route::apiResource('staff', StaffController::class)->middleware('permission:staff.manage');
+    Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
    
 });
 

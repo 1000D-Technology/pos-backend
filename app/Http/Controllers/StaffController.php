@@ -2,30 +2,88 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\ApiResponse;
 use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule; // Import Rule for unique validation
+use Illuminate\Validation\Rule;
 
+/**
+ * @OA\Tag(
+ *     name="Staff Roles",
+ *     description="API endpoints for managing staff roles"
+ * )
+ */
 class StaffController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/staff-roles",
+     *     summary="List all active staff roles",
+     *     tags={"Staff Roles"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of active staff roles",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Staff roles retrieved successfully"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="role_name", type="string"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function index()
     {
-        // By default, SoftDeletes trait excludes soft-deleted records from `all()`
+        // The SoftDeletes trait automatically excludes soft-deleted records.
         $staff = Staff::orderBy('role_name')->get();
-        return response()->json($staff);
+        return response()->json(
+            ApiResponse::success('Staff roles retrieved successfully', $staff)->toArray()
+        );
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *     path="/api/staff-roles",
+     *     summary="Create a new staff role",
+     *     tags={"Staff Roles"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"role_name"},
+     *             @OA\Property(property="role_name", type="string", maxLength=255, example="Manager")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Staff role created successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Staff role created successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="role_name", type="string"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -34,7 +92,7 @@ class StaffController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Ensure role_name is unique among active (non-deleted) staff members
+                // Ensure role_name is unique among active (non-deleted) staff roles
                 Rule::unique('staff')->where(function ($query) {
                     $query->whereNull('deleted_at');
                 }),
@@ -42,45 +100,125 @@ class StaffController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(
+                ApiResponse::error('Validation failed', $validator->errors()->toArray())->toArray(),
+                422
+            );
         }
 
         $staff = Staff::create($request->all());
-        return response()->json($staff, 201);
+        return response()->json(
+            ApiResponse::success('Staff role created successfully', $staff)->toArray(),
+            201
+        );
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *     path="/api/staff-roles/{id}",
+     *     summary="Get a specific staff role by ID",
+     *     tags={"Staff Roles"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the staff role",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Staff role details",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Staff role retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="role_name", type="string"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Staff role not found"
+     *     )
+     * )
      */
     public function show($id)
     {
-        // find() automatically excludes soft-deleted records by default with SoftDeletes trait
+        // find() automatically excludes soft-deleted records.
         $staff = Staff::find($id);
 
         if (!$staff) {
-            return response()->json(['message' => 'Staff member not found'], 404);
+            return response()->json(
+                ApiResponse::error('Staff role not found')->toArray(),
+                404
+            );
         }
 
-        return response()->json($staff);
+        return response()->json(
+            ApiResponse::success('Staff role retrieved successfully', $staff)->toArray()
+        );
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Put(
+     *     path="/api/staff-roles/{id}",
+     *     summary="Update a staff role",
+     *     tags={"Staff Roles"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the staff role",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"role_name"},
+     *             @OA\Property(property="role_name", type="string", maxLength=255, example="Senior Manager")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Staff role updated successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Staff role updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="role_name", type="string"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Staff role not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
      */
     public function update(Request $request, $id)
     {
-        // find() automatically excludes soft-deleted records by default with SoftDeletes trait
+        // find() automatically excludes soft-deleted records.
         $staff = Staff::find($id);
 
         if (!$staff) {
-            return response()->json(['message' => 'Staff member not found'], 404);
+            return response()->json(
+                ApiResponse::error('Staff role not found')->toArray(),
+                404
+            );
         }
 
         $validator = Validator::make($request->all(), [
@@ -88,7 +226,7 @@ class StaffController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Ensure role_name is unique among active staff members, ignoring the current staff member
+                // Ensure role_name is unique among active roles, ignoring the current one.
                 Rule::unique('staff')->ignore($staff->id)->where(function ($query) {
                     $query->whereNull('deleted_at');
                 }),
@@ -96,29 +234,62 @@ class StaffController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(
+                ApiResponse::error('Validation failed', $validator->errors()->toArray())->toArray(),
+                422
+            );
         }
 
         $staff->update($request->all());
-        return response()->json($staff);
+        return response()->json(
+            ApiResponse::success('Staff role updated successfully', $staff)->toArray()
+        );
     }
 
     /**
-     * Remove the specified resource from storage. (Soft Delete)
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Delete(
+     *     path="/api/staff-roles/{id}",
+     *     summary="Soft delete a staff role",
+     *     tags={"Staff Roles"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the staff role to soft delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Staff role soft deleted successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Staff role soft deleted successfully"),
+     *             @OA\Property(property="data", type="object", example=null)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Staff role not found"
+     *     )
+     * )
      */
     public function destroy($id)
     {
-        // find() automatically excludes soft-deleted records by default with SoftDeletes trait
+        // find() automatically excludes soft-deleted records.
         $staff = Staff::find($id);
 
         if (!$staff) {
-            return response()->json(['message' => 'Staff member not found'], 404);
+            return response()->json(
+                ApiResponse::error('Staff role not found')->toArray(),
+                404
+            );
         }
 
-        $staff->delete(); // This will soft delete the staff member
-        return response()->json(['message' => 'Staff member soft deleted successfully']);
+        $staff->delete(); // This performs a soft delete.
+        return response()->json(
+            ApiResponse::success('Staff role soft deleted successfully')->toArray()
+        );
     }
 }

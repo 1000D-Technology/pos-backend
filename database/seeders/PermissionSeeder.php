@@ -51,7 +51,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
 
             // Staff Management
-            ['name' => 'Manage Staff', 'slug' => 'staff.manage', 'description' => 'Create/Update/Delete staff roles.'],
+            ['name' => 'Manage Staff', 'slug' => 'staff-roles.manage', 'description' => 'Create/Update/Delete staff roles.'],
         ];
 
         foreach ($permissions as $permission) {
