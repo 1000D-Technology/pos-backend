@@ -1,4 +1,3 @@
-```php
 <?php
 
 use App\Http\Controllers\Api\AuthController;
@@ -9,6 +8,7 @@ use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Api\CompanyController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -33,6 +33,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
+    Artisan::call('l5-swagger:generate');
+    Artisan::call('migrate:fresh', [
+        '--seed' => true
+    ]);
 
     return response()->json([
         'status' => 'success',
@@ -96,6 +100,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Staff Routes
     Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
    
+    // Company Routes
+    Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
+    Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
+    Route::get('/company/{id}', [CompanyController::class, 'show'])->middleware('permission:company.view');
+    Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
+    Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
 });
 
 // Public Category Routes
