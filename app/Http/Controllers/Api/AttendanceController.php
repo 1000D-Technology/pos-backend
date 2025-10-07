@@ -216,8 +216,8 @@ class AttendanceController extends Controller
     {
         $attendance = Attendance::find($id);
 
-        if (! $attendance) {
-            return response()->json(['success' => false, 'message' => 'Attendance not found'], 404);
+        if (!$attendance) {
+            return response()->json(ApiResponse::error('Attendance not found')->toArray(), 404);
         }
         $attendance->fill($request->only(['user_id', 'attendance_date', 'status', 'total_hours', 'note']));
 
