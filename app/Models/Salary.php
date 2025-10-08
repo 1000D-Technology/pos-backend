@@ -32,4 +32,9 @@ class Salary extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalaryPayment::class);
+    }
 }

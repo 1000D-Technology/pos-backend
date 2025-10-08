@@ -59,6 +59,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Create Salary Slips', 'slug' => 'salaries.create', 'description' => 'Generate salary slips for employees.'],
             ['name' => 'View Salary Slips', 'slug' => 'salaries.view', 'description' => 'View salary slip records.'],
             ['name' => 'View Single Salary Slip', 'slug' => 'salaries.view', 'description' => 'View detailed salary slip information.'],
+            ['name' => 'Pay Salaries', 'slug' => 'salaries.pay', 'description' => 'Record and manage salary payments.'],
 
         ];
 

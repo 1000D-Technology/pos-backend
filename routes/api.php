@@ -97,6 +97,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
     Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
     Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
+    // Salary Payment Routes
+    Route::get('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'store'])->middleware('permission:salaries.pay');
+    Route::get('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'show'])->middleware('permission:salaries.view');
+    Route::delete('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'destroy'])->middleware('permission:salaries.pay');
 });
 
 // Public Category Routes
