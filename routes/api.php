@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -32,10 +33,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
-    Artisan::call('l5-swagger:generate');
-    Artisan::call('migrate:fresh', [
-        '--seed' => true
-    ]);
+//    Artisan::call('l5-swagger:generate');
+//    Artisan::call('migrate:fresh', [
+//        '--seed' => true
+//    ]);
 
     return response()->json([
         'status' => 'success',
@@ -71,6 +72,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
 
+    // Supplier Payment Management
+    Route::get('/supplier-payments', [SupplierPaymentController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments', [SupplierPaymentController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments/{id}', [SupplierPaymentController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}', [SupplierPaymentController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments/{id}', [SupplierPaymentController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
 
     // Bank Routes
     Route::get('/banks', [BankController::class, 'index'])->middleware('permission:bank.view');
@@ -102,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/company/{id}', [CompanyController::class, 'show'])->middleware('permission:company.view');
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
+
 });
 
 // Public Category Routes
