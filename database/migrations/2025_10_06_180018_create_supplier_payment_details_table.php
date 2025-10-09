@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('supplier_payment_details', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('supplier_payment_id')->constrained('supplier_payments')->onDelete('cascade');
+            $table->decimal('paid_amount', 10, 2);
+            $table->enum('payment_method',['Cash', 'Bank Transfer', 'Cheque', 'Credit Card']);
+            $table->string('note')->nullable();
+            $table->string('img')->nullable();
             $table->timestamps();
         });
     }

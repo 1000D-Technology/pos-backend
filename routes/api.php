@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SupplierPaymentController;
+use App\Http\Controllers\Api\SupplierPaymentDetailsController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -78,6 +79,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supplier-payments/{id}', [SupplierPaymentController::class, 'show'])->middleware('permission:suppliers-payments.view');
     Route::post('/supplier-payments/{id}', [SupplierPaymentController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
     Route::delete('/supplier-payments/{id}', [SupplierPaymentController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
+
+    // Supplier Payment Details Routes
+    Route::get('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
+
 
     // Bank Routes
     Route::get('/banks', [BankController::class, 'index'])->middleware('permission:bank.view');
