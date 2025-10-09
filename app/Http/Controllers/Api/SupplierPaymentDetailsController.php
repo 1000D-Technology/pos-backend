@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
+
+/**
+ * @OA\Tag(
+ * name="Supplier Payment Details",
+ * description="API Endpoints for managing individual payment transactions linked to a bill."
+ * )
+ */
 class SupplierPaymentDetailsController extends Controller
 {
 
@@ -35,7 +42,21 @@ class SupplierPaymentDetailsController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     * path="/api/supplier-payments/{payment_id}/details",
+     * tags={"Supplier Payment Details"},
+     * summary="List all payment details for a specific supplier bill.",
+     * @OA\Parameter(name="payment_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the parent Supplier Bill."),
+     * @OA\Response(response=200, description="List of payment details retrieved successfully.",
+     * @OA\JsonContent(type="object",
+     * @OA\Property(property="status", type="string", example="success"),
+     * @OA\Property(property="data", type="object",
+     * @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/SupplierPaymentDetail"))
+     * )
+     * )
+     * ),
+     * @OA\Response(response=404, description="Parent bill not found.")
+     * )
      */
     public function index(string $payment_id)
     {
@@ -48,7 +69,31 @@ class SupplierPaymentDetailsController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     * path="/api/supplier-payments/{payment_id}/details",
+     * tags={"Supplier Payment Details"},
+     * summary="Create a new payment transaction against a bill.",
+     * description="Creates a new payment detail, updates parent bill's due_amount and status transactionally.",
+     * @OA\Parameter(name="payment_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the parent Supplier Bill."),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\MediaType(
+     * mediaType="multipart/form-data",
+     * @OA\Schema(
+     * required={"paid_amount", "payment_method"},
+     * @OA\Property(property="paid_amount", type="number", format="float", example=5000.00),
+     * @OA\Property(property="payment_method", type="string", enum={"Cash", "Bank Transfer", "Cheque", "Credit Card"}, example="Cash"),
+     * @OA\Property(property="note", type="string", nullable=true),
+     * @OA\Property(property="img", type="string", format="binary", nullable=true, description="Payment receipt image (max 2MB).")
+     * )
+     * )
+     * ),
+     * @OA\Response(response=201, description="Payment detail created successfully.",
+     * @OA\JsonContent(ref="#/components/schemas/SupplierPaymentDetail")
+     * ),
+     * @OA\Response(response=422, description="Validation Error or Payment exceeds due amount."),
+     * @OA\Response(response=404, description="Parent bill not found.")
+     * )
      */
     public function store(Request $request ,string $payment_id)
     {
@@ -95,7 +140,17 @@ class SupplierPaymentDetailsController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     * path="/api/supplier-payments/{payment_id}/details/{detail_id}",
+     * tags={"Supplier Payment Details"},
+     * summary="Retrieve a single payment detail record.",
+     * @OA\Parameter(name="payment_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the parent Supplier Bill."),
+     * @OA\Parameter(name="detail_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the Payment Detail."),
+     * @OA\Response(response=200, description="Payment detail retrieved successfully.",
+     * @OA\JsonContent(ref="#/components/schemas/SupplierPaymentDetail")
+     * ),
+     * @OA\Response(response=404, description="Payment detail not found.")
+     * )
      */
     public function show(string $payment_id, string $detail_id)
     {
@@ -107,7 +162,32 @@ class SupplierPaymentDetailsController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     * path="/api/supplier-payments/{payment_id}/details/{detail_id}",
+     * tags={"Supplier Payment Details"},
+     * summary="Update a payment transaction.",
+     * description="Updates a detail record and correctly recalculates the parent bill's due_amount and status transactionally. Requires POST request with _method=PUT for file uploads.",
+     * @OA\Parameter(name="payment_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the parent Supplier Bill."),
+     * @OA\Parameter(name="detail_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the Payment Detail."),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\MediaType(
+     * mediaType="multipart/form-data",
+     * @OA\Schema(
+     * @OA\Property(property="paid_amount", type="number", format="float", example=6000.00, description="New paid amount."),
+     * @OA\Property(property="payment_method", type="string", enum={"Cash", "Bank Transfer", "Cheque", "Credit Card"}, example="Cheque"),
+     * @OA\Property(property="note", type="string", nullable=true),
+     * @OA\Property(property="img", type="string", format="binary", nullable=true, description="New payment receipt image (optional)."),
+     * @OA\Property(property="_method", type="string", example="PUT", description="Required for method spoofing.")
+     * )
+     * )
+     * ),
+     * @OA\Response(response=200, description="Payment detail updated successfully.",
+     * @OA\JsonContent(ref="#/components/schemas/SupplierPaymentDetail")
+     * ),
+     * @OA\Response(response=404, description="Payment detail or parent bill not found."),
+     * @OA\Response(response=422, description="Validation Error or New payment exceeds due amount.")
+     * )
      */
     public function update(Request $request, string $payment_id, string $detail_id)
     {
@@ -166,7 +246,16 @@ class SupplierPaymentDetailsController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     * path="/api/supplier-payments/{payment_id}/details/{detail_id}",
+     * tags={"Supplier Payment Details"},
+     * summary="Delete a payment transaction.",
+     * description="Deletes a detail record and correctly recalculates the parent bill's due_amount and status transactionally.",
+     * @OA\Parameter(name="payment_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the parent Supplier Bill."),
+     * @OA\Parameter(name="detail_id", in="path", required=true, @OA\Schema(type="integer"), description="ID of the Payment Detail."),
+     * @OA\Response(response=200, description="Payment detail deleted successfully."),
+     * @OA\Response(response=404, description="Payment detail or parent bill not found.")
+     * )
      */
     public function destroy(string $payment_id, string $detail_id)
     {
