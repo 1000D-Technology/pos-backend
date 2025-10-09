@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +16,7 @@ class SalaryPayment extends Model
     protected $fillable = [
         'salary_id',
         'salary_paid_by',
+        'payment_type',
         'payment_method',
         'paid_amount',
         'payment_date',
@@ -22,6 +24,7 @@ class SalaryPayment extends Model
     ];
 
     protected $casts = [
+        'payment_type' => PaymentType::class,
         'paid_amount' => 'decimal:2',
         'payment_date' => 'date',
     ];

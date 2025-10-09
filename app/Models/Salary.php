@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,8 @@ class Salary extends Model
         'total_salary' => 'decimal:2',
     ];
 
+    protected $appends = ['total_paid', 'balance'];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -36,5 +39,25 @@ class Salary extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(SalaryPayment::class);
+    }
+
+    /**
+     * Get the total amount paid for this salary
+     */
+    protected function totalPaid(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->payments()->sum('paid_amount') ?? 0
+        );
+    }
+
+    /**
+     * Get the remaining balance for this salary
+     */
+    protected function balance(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->total_salary - $this->total_paid
+        );
     }
 }

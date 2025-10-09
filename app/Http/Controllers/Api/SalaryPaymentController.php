@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\PaymentType;
 use App\Http\Controllers\Controller;
 use App\Models\Salary;
 use App\Models\SalaryPayment;
@@ -26,7 +27,7 @@ class SalaryPaymentController extends Controller
      *     operationId="getSalaryPayments",
      *     tags={"Salary Payments"},
      *     summary="Get list of salary payments",
-     *     description="Returns paginated list of salary payments with optional filters",
+     *     description="Returns paginated list of salary payments with optional filters. Salary records include calculated total_paid and balance fields.",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="salary_id",
@@ -41,6 +42,16 @@ class SalaryPaymentController extends Controller
      *         description="Filter by user who made the payment",
      *         required=false,
      *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="payment_type",
+     *         in="query",
+     *         description="Filter by payment type",
+     *         required=false,
+     *         @OA\Schema(
+     *             type="string",
+     *             enum={"regular", "advance", "bonus", "overtime", "commission", "allowance", "adjustment"}
+     *         )
      *     ),
      *     @OA\Parameter(
      *         name="page",
@@ -65,6 +76,7 @@ class SalaryPaymentController extends Controller
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="salary_id", type="integer", example=1),
      *                         @OA\Property(property="salary_paid_by", type="integer", example=1),
+     *                         @OA\Property(property="payment_type", type="string", enum={"regular", "advance", "bonus", "overtime", "commission", "allowance", "adjustment"}, example="regular"),
      *                         @OA\Property(property="payment_method", type="string", example="Bank Transfer"),
      *                         @OA\Property(property="paid_amount", type="number", format="float", example=50000.00),
      *                         @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08"),
@@ -77,6 +89,8 @@ class SalaryPaymentController extends Controller
      *                             @OA\Property(property="id", type="integer", example=1),
      *                             @OA\Property(property="salary_month", type="string", example="2025-10"),
      *                             @OA\Property(property="total_salary", type="number", format="float", example=53000.00),
+     *                             @OA\Property(property="total_paid", type="number", format="float", example=30000.00, description="Total amount paid so far"),
+     *                             @OA\Property(property="balance", type="number", format="float", example=23000.00, description="Remaining balance to be paid"),
      *                             @OA\Property(
      *                                 property="user",
      *                                 type="object",
@@ -122,6 +136,11 @@ class SalaryPaymentController extends Controller
             $query->where('salary_paid_by', $request->salary_paid_by);
         }
 
+        // Filter by payment_type if provided
+        if ($request->has('payment_type')) {
+            $query->where('payment_type', $request->payment_type);
+        }
+
         $payments = $query->orderBy('payment_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
@@ -140,7 +159,7 @@ class SalaryPaymentController extends Controller
      *     operationId="storeSalaryPayment",
      *     tags={"Salary Payments"},
      *     summary="Record a new salary payment",
-     *     description="Create a new salary payment record",
+     *     description="Create a new salary payment record with specified type (regular, advance, bonus, etc.)",
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
@@ -148,6 +167,13 @@ class SalaryPaymentController extends Controller
      *             required={"salary_id","salary_paid_by","paid_amount"},
      *             @OA\Property(property="salary_id", type="integer", example=1, description="Salary slip ID"),
      *             @OA\Property(property="salary_paid_by", type="integer", example=1, description="User ID who made the payment"),
+     *             @OA\Property(
+     *                 property="payment_type", 
+     *                 type="string", 
+     *                 enum={"regular", "advance", "bonus", "overtime", "commission", "allowance", "adjustment"},
+     *                 example="regular", 
+     *                 description="Type of payment (default: regular)"
+     *             ),
      *             @OA\Property(property="payment_method", type="string", example="Bank Transfer", description="Payment method used"),
      *             @OA\Property(property="paid_amount", type="number", format="float", example=50000.00, description="Amount paid"),
      *             @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08", description="Date of payment"),
@@ -166,6 +192,7 @@ class SalaryPaymentController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="salary_id", type="integer", example=1),
      *                 @OA\Property(property="salary_paid_by", type="integer", example=1),
+     *                 @OA\Property(property="payment_type", type="string", example="regular"),
      *                 @OA\Property(property="payment_method", type="string", example="Bank Transfer"),
      *                 @OA\Property(property="paid_amount", type="number", format="float", example=50000.00),
      *                 @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08"),
@@ -174,6 +201,8 @@ class SalaryPaymentController extends Controller
      *                     property="salary",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="total_paid", type="number", format="float", example=50000.00),
+     *                     @OA\Property(property="balance", type="number", format="float", example=3000.00),
      *                     @OA\Property(
      *                         property="user",
      *                         type="object",
@@ -223,6 +252,7 @@ class SalaryPaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'salary_id' => 'required|exists:salaries,id',
             'salary_paid_by' => 'required|exists:users,id',
+            'payment_type' => 'nullable|string|in:regular,advance,bonus,overtime,commission,allowance,adjustment',
             'payment_method' => 'nullable|string|max:255',
             'paid_amount' => 'required|numeric|min:0.01',
             'payment_date' => 'nullable|date',
@@ -252,6 +282,7 @@ class SalaryPaymentController extends Controller
             $payment = SalaryPayment::create([
                 'salary_id' => $salary->id,
                 'salary_paid_by' => $request->salary_paid_by,
+                'payment_type' => $request->payment_type ?? 'regular',
                 'payment_method' => $request->payment_method,
                 'paid_amount' => $request->paid_amount,
                 'payment_date' => $request->payment_date ?? now()->format('Y-m-d'),
@@ -286,7 +317,7 @@ class SalaryPaymentController extends Controller
      *     operationId="getSalaryPayment",
      *     tags={"Salary Payments"},
      *     summary="Get salary payment details",
-     *     description="Returns details of a specific salary payment",
+     *     description="Returns details of a specific salary payment including total_paid and balance for the salary",
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
@@ -306,6 +337,7 @@ class SalaryPaymentController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="salary_id", type="integer", example=1),
      *                 @OA\Property(property="salary_paid_by", type="integer", example=1),
+     *                 @OA\Property(property="payment_type", type="string", example="regular"),
      *                 @OA\Property(property="payment_method", type="string", example="Bank Transfer"),
      *                 @OA\Property(property="paid_amount", type="number", format="float", example=50000.00),
      *                 @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08"),
@@ -316,6 +348,8 @@ class SalaryPaymentController extends Controller
      *                     property="salary",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="total_paid", type="number", format="float", example=50000.00),
+     *                     @OA\Property(property="balance", type="number", format="float", example=3000.00),
      *                     @OA\Property(
      *                         property="user",
      *                         type="object",
@@ -381,6 +415,13 @@ class SalaryPaymentController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="payment_type", 
+     *                 type="string", 
+     *                 enum={"regular", "advance", "bonus", "overtime", "commission", "allowance", "adjustment"},
+     *                 example="bonus", 
+     *                 description="Type of payment"
+     *             ),
      *             @OA\Property(property="payment_method", type="string", example="Cash", description="Payment method used"),
      *             @OA\Property(property="paid_amount", type="number", format="float", example=50000.00, description="Amount paid"),
      *             @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08", description="Date of payment"),
@@ -399,6 +440,7 @@ class SalaryPaymentController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="salary_id", type="integer", example=1),
      *                 @OA\Property(property="salary_paid_by", type="integer", example=1),
+     *                 @OA\Property(property="payment_type", type="string", example="bonus"),
      *                 @OA\Property(property="payment_method", type="string", example="Cash"),
      *                 @OA\Property(property="paid_amount", type="number", format="float", example=50000.00),
      *                 @OA\Property(property="payment_date", type="string", format="date", example="2025-10-08"),
@@ -439,6 +481,7 @@ class SalaryPaymentController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'payment_type' => 'nullable|string|in:regular,advance,bonus,overtime,commission,allowance,adjustment',
             'payment_method' => 'nullable|string|max:255',
             'paid_amount' => 'nullable|numeric|min:0.01',
             'payment_date' => 'nullable|date',
@@ -456,6 +499,7 @@ class SalaryPaymentController extends Controller
             DB::beginTransaction();
 
             $payment->update($request->only([
+                'payment_type',
                 'payment_method',
                 'paid_amount',
                 'payment_date',

@@ -58,8 +58,14 @@ class PermissionSeeder extends Seeder
             // Salary Management
             ['name' => 'Create Salary Slips', 'slug' => 'salaries.create', 'description' => 'Generate salary slips for employees.'],
             ['name' => 'View Salary Slips', 'slug' => 'salaries.view', 'description' => 'View salary slip records.'],
-            ['name' => 'View Single Salary Slip', 'slug' => 'salaries.view', 'description' => 'View detailed salary slip information.'],
-            ['name' => 'Pay Salaries', 'slug' => 'salaries.pay', 'description' => 'Record and manage salary payments.'],
+            ['name' => 'Update Salary Slips', 'slug' => 'salaries.update', 'description' => 'Edit existing salary slip details.'],
+            ['name' => 'Delete Salary Slips', 'slug' => 'salaries.delete', 'description' => 'Remove salary slips from the system.'],
+
+            // Salary Payment Management
+            ['name' => 'Create Salary Payments', 'slug' => 'salary-payments.create', 'description' => 'Record new salary payments (regular, advance, bonus, etc).'],
+            ['name' => 'View Salary Payments', 'slug' => 'salary-payments.view', 'description' => 'View salary payment records and history.'],
+            ['name' => 'Update Salary Payments', 'slug' => 'salary-payments.update', 'description' => 'Edit existing salary payment details.'],
+            ['name' => 'Delete Salary Payments', 'slug' => 'salary-payments.delete', 'description' => 'Remove salary payment records from the system.'],
 
         ];
 

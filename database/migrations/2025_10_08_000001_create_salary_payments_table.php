@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('salary_id')->constrained('salaries')->onDelete('cascade');
             $table->foreignId('salary_paid_by')->constrained('users')->onDelete('cascade');
+            $table->enum('payment_type', ['regular', 'advance', 'bonus', 'overtime', 'commission', 'allowance', 'adjustment'])->default('regular');
             $table->string('payment_method')->nullable();
             $table->decimal('paid_amount', 10, 2);
             $table->date('payment_date')->nullable();
