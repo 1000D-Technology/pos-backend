@@ -33,7 +33,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
             // Unit Management
-            ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
+            ['name' => 'Manage Unit', 'slug' => 'units.manage', 'description' => 'Create/update/delete.'],
 
 
             //Category Management
