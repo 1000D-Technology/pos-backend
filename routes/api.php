@@ -8,8 +8,9 @@ use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\CompanyBankAccountController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\CompanyController;
-use App\Models\User;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
+    Artisan::call('l5-swagger:generate');
+    Artisan::call('migrate:fresh', [
+        '--seed' => true
+    ]);
 
     return response()->json([
         'status' => 'success',
@@ -98,6 +103,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
     Route::delete('/company/bank-accounts/{id}', [CompanyBankAccountController::class, 'destroy'])->middleware('permission:company-bank.manage');
 
+    // Staff Routes
+    Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
+   
     // Company Routes
     Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
     Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
@@ -106,10 +114,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
 
 
+    // Attendance Management
+    // Admin-managed attendance CRUD. Permission slug: attendances.manage
+    Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
 });
 
 // Public Category Routes
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-

@@ -25,6 +25,10 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'password' => Hash::make('password'),
+                'nic' => '123456789V',
+                'basic_salary' => 75000.00,
+                'contact_no' => '+1234567890',
+                'address' => '123 Admin Street, City',
             ]
         );
         // Assign all permissions to the admin
@@ -38,6 +42,10 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Cashier User',
                 'password' => Hash::make('password'),
+                'nic' => '987654321V',
+                'basic_salary' => 45000.00,
+                'contact_no' => '+0987654321',
+                'address' => '456 Cashier Avenue, Town',
             ]
         );
         $this->command->info('Cashier user created/updated.');
@@ -49,6 +57,10 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Guest User',
                 'password' => Hash::make('password'),
+                'nic' => '555555555V',
+                'basic_salary' => 30000.00,
+                'contact_no' => '+5555555555',
+                'address' => '789 Guest Lane, Village',
             ]
         );
         $this->command->info('Guest user created/updated.');
