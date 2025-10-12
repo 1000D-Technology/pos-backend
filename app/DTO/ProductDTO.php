@@ -19,18 +19,18 @@ class ProductDTO
         $this->attributes = $attributes;
     }
 
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data, bool $isUpdate = false): self
     {
         $attrs = [];
 
-        // copy only fillable keys
+    // copy only fillable keys that exist in the input
         foreach (self::$fillable as $key) {
             if (array_key_exists($key, $data)) {
                 $attrs[$key] = $data[$key];
             }
         }
 
-        // normalize numeric strings to floats for prices
+    // normalize numeric strings to floats for prices
         if (isset($attrs['mrp']) && $attrs['mrp'] !== null) {
             $attrs['mrp'] = (float) $attrs['mrp'];
         }
@@ -38,16 +38,18 @@ class ProductDTO
             $attrs['locked_price'] = (float) $attrs['locked_price'];
         }
 
-        // business rule: if NON_STOCKED then clear prices
-        if (isset($attrs['type']) && $attrs['type'] === 'NON_STOCKED') {
+    // business rule: if NON_STOCKED then clear prices (only when type is explicitly present)
+        if (array_key_exists('type', $attrs) && $attrs['type'] === 'NON_STOCKED') {
             $attrs['mrp'] = null;
             $attrs['locked_price'] = null;
         }
 
-        // ensure nullable fields exist and are null when not present
-        foreach (['supplier_id', 'cabin_number', 'img', 'color', 'barcode'] as $nullable) {
-            if (!array_key_exists($nullable, $attrs)) {
-                $attrs[$nullable] = null;
+    // For create (not update) ensure nullable fields exist and are null when not present
+        if (!$isUpdate) {
+            foreach (['supplier_id', 'cabin_number', 'img', 'color', 'barcode'] as $nullable) {
+                if (!array_key_exists($nullable, $attrs)) {
+                    $attrs[$nullable] = null;
+                }
             }
         }
 

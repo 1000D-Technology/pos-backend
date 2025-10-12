@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use App\DTO\ApiResponse;
 
 class StoreProductRequest extends FormRequest
 {
@@ -48,6 +51,16 @@ class StoreProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // normalize values if needed
+        // prepare validation if needed
+    }
+
+    /**
+     * Return a JSON response on validation failure to ensure API clients get JSON errors
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        $errors = $validator->errors()->toArray();
+        $response = ApiResponse::error('Validation failed', $errors)->toArray();
+        throw new HttpResponseException(response()->json($response, 422));
     }
 }
