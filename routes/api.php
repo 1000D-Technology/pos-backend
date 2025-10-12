@@ -113,6 +113,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'show'])->middleware('permission:products.view');
     Route::put('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'update'])->middleware('permission:products.update');
     Route::delete('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'destroy'])->middleware('permission:products.delete');
+
+    // Stock Routes
+    Route::get('/stocks/search', [\App\Http\Controllers\Api\StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::get('/stocks', [\App\Http\Controllers\Api\StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::post('/stocks', [\App\Http\Controllers\Api\StockController::class, 'store'])->middleware('permission:stocks.create');
+    Route::get('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'show'])->middleware('permission:stocks.view');
+    Route::put('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'update'])->middleware('permission:stocks.update');
 });
 
 // Public Category Routes

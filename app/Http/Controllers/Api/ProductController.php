@@ -4,8 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\DTO\ProductDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
+// Using inline validation to match supplier-style; FormRequest files are present but not used here
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -36,9 +35,41 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function store(StoreProductRequest $request)
+    public function store(Request $request)
     {
-        $dto = ProductDTO::fromArray($request->validated());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:STOCKED,NON_STOCKED',
+            'category_id' => 'required|exists:categories,id',
+            'unit_id' => 'required|exists:units,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'mrp' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('type') === 'NON_STOCKED' && !is_null($value)) {
+                        $fail('MRP must be null for NON_STOCKED products.');
+                    }
+                },
+            ],
+            'locked_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('type') === 'NON_STOCKED' && !is_null($value)) {
+                        $fail('Locked price must be null for NON_STOCKED products.');
+                    }
+                },
+            ],
+            'cabin_number' => 'nullable|string|max:100',
+            'img' => 'nullable|url',
+            'color' => 'nullable|string|max:50',
+            'barcode' => 'nullable|string|max:255|unique:products,barcode',
+        ]);
+
+        $dto = ProductDTO::fromArray($validated);
         $product = Product::create($dto->toArray());
 
         return new ProductResource($product->load(['category', 'unit', 'supplier']));
@@ -50,10 +81,43 @@ class ProductController extends Controller
         return new ProductResource($product);
     }
 
-    public function update(UpdateProductRequest $request, $id)
+    public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        $dto = ProductDTO::fromArray($request->validated());
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'type' => 'sometimes|required|in:STOCKED,NON_STOCKED',
+            'category_id' => 'sometimes|required|exists:categories,id',
+            'unit_id' => 'sometimes|required|exists:units,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'mrp' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if (($request->has('type') && $request->input('type') === 'NON_STOCKED') && !is_null($value)) {
+                        $fail('MRP must be null for NON_STOCKED products.');
+                    }
+                },
+            ],
+            'locked_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    if (($request->has('type') && $request->input('type') === 'NON_STOCKED') && !is_null($value)) {
+                        $fail('Locked price must be null for NON_STOCKED products.');
+                    }
+                },
+            ],
+            'cabin_number' => 'nullable|string|max:100',
+            'img' => 'nullable|url',
+            'color' => 'nullable|string|max:50',
+            'barcode' => "nullable|string|max:255|unique:products,barcode,{$id}",
+        ]);
+
+        $dto = ProductDTO::fromArray($validated);
         $product->update($dto->toArray());
 
         return new ProductResource($product->fresh(['category', 'unit', 'supplier']));
