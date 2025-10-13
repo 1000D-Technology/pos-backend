@@ -25,6 +25,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'nic',
+        'basic_salary',
+        'contact_no',
+        'address',
     ];
 
     /**
@@ -53,6 +57,14 @@ class User extends Authenticatable
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class);
+    }
+
+    /**
+     * User attendances relationship
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
     }
 
     public function hasPermissionTo(string $permissionSlug): bool
