@@ -10,7 +10,12 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\SupplierPaymentDetailsController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\SalaryController;
 use App\Models\User;
+use App\Http\Controllers\Api\CompanyBankAccountController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -112,6 +117,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Salary Routes
+    Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
+    // Salary Payment Routes
+    Route::get('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'show'])->middleware('permission:salaries.view');
+    Route::delete('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'destroy'])->middleware('permission:salaries.create');
+    // Company Bank Account Routes
+    Route::get('/company/bank-accounts', [CompanyBankAccountController::class, 'index'])->middleware('permission:company-bank.view');
+    Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
+    Route::delete('/company/bank-accounts/{id}', [CompanyBankAccountController::class, 'destroy'])->middleware('permission:company-bank.manage');
+
+    // Staff Routes
+    Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
+   
     // Company Routes
     Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
     Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
@@ -119,10 +141,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
 
+
+    // Attendance Management
+    // Admin-managed attendance CRUD. Permission slug: attendances.manage
+    Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
 });
 
 // Public Category Routes
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-

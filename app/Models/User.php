@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -13,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable,HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -58,12 +59,20 @@ class User extends Authenticatable
         return $this->belongsToMany(Permission::class);
     }
 
+    /**
+     * User attendances relationship
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
     public function hasPermissionTo(string $permissionSlug): bool
     {
         $permissions = Cache::remember(
             key: "user.{$this->id}.permissions", // A unique cache key for this user
             // ttl: now()->addHour(), // How long to cache (e.g., 1 hour)
-            ttl: now()->addSeconds(10),//for dev stage cache (e.g., 1 hour)
+            ttl: now()->addSeconds(10), //for dev stage cache (e.g., 1 hour)
             callback: fn() => $this->permissions()->pluck('slug')->toArray() // The data to cache
         );
 
@@ -76,5 +85,10 @@ class User extends Authenticatable
     public function clearPermissionCache(): void
     {
         Cache::forget("user.{$this->id}.permissions");
+    }
+
+    public function salaries(): HasMany
+    {
+        return $this->hasMany(Salary::class);
     }
 }
