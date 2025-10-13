@@ -69,6 +69,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Company Permission', 'slug' => 'company.manage-permissions', 'description' => 'Assign or revoke permissions from company.'],
             ['name' => 'View company', 'slug' => 'company.view', 'description' => 'View the list of system company.'],
 
+            // Supplier payment management
+            ['name' => 'Suppliers Payments Permission', 'slug' => 'suppliers.manage-permissions', 'description' => 'Add new suppliers payment to the system.'],
+            ['name' => 'View Suppliers Payments', 'slug' => 'suppliers-payments.view', 'description' => 'Add new suppliers payment to the system.'],
             // Company bank account management
             ['name' => 'Manage Company Bank Accounts', 'slug' => 'company-bank.manage', 'description' => 'Create/Update/Delete company bank accounts.'],
             ['name' => 'View Company Bank Accounts', 'slug' => 'company-bank.view', 'description' => 'View the list of company bank accounts.'],
