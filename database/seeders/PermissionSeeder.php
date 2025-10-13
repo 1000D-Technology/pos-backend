@@ -36,6 +36,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
 
 
+
             //Category Management
             ['name' => 'Manage Category', 'slug' => 'categories.manage', 'description' => 'Create/Update/Delete.'],
 
@@ -51,6 +52,17 @@ class PermissionSeeder extends Seeder
             ['name' => 'Manage Bank Permission', 'slug' => 'bank.manage-permissions', 'description' => 'Assign or revoke permissions from bank.'],
             ['name' => 'View Bank', 'slug' => 'bank.view', 'description' => 'View the list of system bank.'],
 
+            // Salary Management
+            ['name' => 'Create Salary Slips', 'slug' => 'salaries.create', 'description' => 'Generate salary slips for employees.'],
+            ['name' => 'View Salary Slips', 'slug' => 'salaries.view', 'description' => 'View salary slip records.'],
+            ['name' => 'Update Salary Slips', 'slug' => 'salaries.update', 'description' => 'Edit existing salary slip details.'],
+            ['name' => 'Delete Salary Slips', 'slug' => 'salaries.delete', 'description' => 'Remove salary slips from the system.'],
+
+            // Salary Payment Management
+            ['name' => 'Create Salary Payments', 'slug' => 'salary-payments.create', 'description' => 'Record new salary payments (regular, advance, bonus, etc).'],
+            ['name' => 'View Salary Payments', 'slug' => 'salary-payments.view', 'description' => 'View salary payment records and history.'],
+            ['name' => 'Update Salary Payments', 'slug' => 'salary-payments.update', 'description' => 'Edit existing salary payment details.'],
+            ['name' => 'Delete Salary Payments', 'slug' => 'salary-payments.delete', 'description' => 'Remove salary payment records from the system.'],
             // Staff Management
             ['name' => 'Manage Staff', 'slug' => 'staff-roles.manage', 'description' => 'Create/Update/Delete staff roles.'],
             // Company management

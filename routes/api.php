@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\SalaryController;
+use App\Models\User;
 use App\Http\Controllers\Api\CompanyBankAccountController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\CompanyController;
@@ -98,6 +100,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Salary Routes
+    Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
+    // Salary Payment Routes
+    Route::get('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'show'])->middleware('permission:salaries.view');
+    Route::delete('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'destroy'])->middleware('permission:salaries.create');
     // Company Bank Account Routes
     Route::get('/company/bank-accounts', [CompanyBankAccountController::class, 'index'])->middleware('permission:company-bank.view');
     Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
