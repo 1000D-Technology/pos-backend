@@ -7,6 +7,24 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+/**
+ * @OA\Schema(
+ *   schema="Product",
+ *   title="Product",
+ *   description="Product data model",
+ *   @OA\Property(property="id", type="integer", example=1),
+ *   @OA\Property(property="name", type="string", example="Sample Product"),
+ *   @OA\Property(property="type", type="string", example="STOCKED"),
+ *   @OA\Property(property="category_id", type="integer"),
+ *   @OA\Property(property="unit_id", type="integer"),
+ *   @OA\Property(property="supplier_id", type="integer", nullable=true),
+ *   @OA\Property(property="mrp", type="number", format="float", nullable=true),
+ *   @OA\Property(property="locked_price", type="number", format="float", nullable=true),
+ *   @OA\Property(property="barcode", type="string", nullable=true),
+ *   @OA\Property(property="created_at", type="string", format="date-time", readOnly=true),
+ *   @OA\Property(property="updated_at", type="string", format="date-time", readOnly=true)
+ * )
+ */
     use SoftDeletes;
 
     protected $fillable = [

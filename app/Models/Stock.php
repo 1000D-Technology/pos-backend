@@ -9,6 +9,23 @@ class Stock extends Model
 {
     use HasFactory;
 
+/**
+ * @OA\Schema(
+ *   schema="Stock",
+ *   title="Stock",
+ *   description="Stock data model",
+ *   @OA\Property(property="id", type="integer", example=1),
+ *   @OA\Property(property="product_id", type="integer"),
+ *   @OA\Property(property="qty", type="number", format="float"),
+ *   @OA\Property(property="max_retail_price", type="number", format="float", nullable=true),
+ *   @OA\Property(property="cost_price", type="number", format="float", nullable=true),
+ *   @OA\Property(property="expire_date", type="string", format="date", nullable=true),
+ *   @OA\Property(property="qty_limit_alert", type="integer", nullable=true),
+ *   @OA\Property(property="created_at", type="string", format="date-time", readOnly=true),
+ *   @OA\Property(property="updated_at", type="string", format="date-time", readOnly=true)
+ * )
+ */
+
     protected $fillable = [
         'product_id',
         'qty',
