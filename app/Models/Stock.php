@@ -31,15 +31,30 @@ class Stock extends Model
         'qty',
         'max_retail_price',
         'cost_price',
+        'manufacture_date',
         'expire_date',
+        'max_retail_price',
+        'cost_price',
+        'cost_percentage',
+        'cost_code',
+        'profit_percentage',
+        'profit',
+        'discount_percentage',
+        'discount',
+        'whole_sale_price',
+        'locked_price',
         'qty_limit_alert',
     ];
 
     protected $casts = [
         'expire_date' => 'date',
+        'manufacture_date' => 'date',
         'qty' => 'decimal:4',
         'max_retail_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'profit' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'whole_sale_price' => 'decimal:2',
     ];
 
     public function product()

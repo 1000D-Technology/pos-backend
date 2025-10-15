@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\DTO\ProductDTO;
 use App\Http\Controllers\Controller;
-// Using inline validation to match supplier-style; FormRequest files are present but not used here
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use App\DTO\ApiResponse;
 
 class ProductController extends Controller
 {
@@ -21,7 +22,7 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'unit', 'supplier']);
 
-        // Filters
+    // Filters
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->query('name') . '%');
         }
@@ -33,6 +34,9 @@ class ProductController extends Controller
         }
         if ($request->filled('supplier_id')) {
             $query->where('supplier_id', $request->query('supplier_id'));
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->query('type'));
         }
 
         $perPage = (int) $request->query('per_page', 15);
@@ -55,7 +59,8 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        try {
+            $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:STOCKED,NON_STOCKED',
             'category_id' => 'required|exists:categories,id',
@@ -65,9 +70,10 @@ class ProductController extends Controller
                 'nullable',
                 'numeric',
                 'min:0',
+                'required_if:type,NON_STOCKED',
                 function ($attribute, $value, $fail) use ($request) {
-                    if ($request->input('type') === 'NON_STOCKED' && !is_null($value)) {
-                        $fail('MRP must be null for NON_STOCKED products.');
+                    if ($request->input('type') === 'STOCKED' && !is_null($value)) {
+                        $fail('MRP must be null for STOCKED products.');
                     }
                 },
             ],
@@ -75,22 +81,32 @@ class ProductController extends Controller
                 'nullable',
                 'numeric',
                 'min:0',
+                'required_if:type,NON_STOCKED',
                 function ($attribute, $value, $fail) use ($request) {
-                    if ($request->input('type') === 'NON_STOCKED' && !is_null($value)) {
-                        $fail('Locked price must be null for NON_STOCKED products.');
+                    if ($request->input('type') === 'STOCKED' && !is_null($value)) {
+                        $fail('Locked price must be null for STOCKED products.');
                     }
                 },
             ],
             'cabin_number' => 'nullable|string|max:100',
-            'img' => 'nullable|url',
+            'img' => 'nullable|image|max:2048',
             'color' => 'nullable|string|max:50',
             'barcode' => 'nullable|string|max:255|unique:products,barcode',
         ]);
+            if ($request->hasFile('img')) {
+                $path = $request->file('img')->store('products', 'public');
+                $validated['img'] = Storage::url($path);
+            }
 
-    $dto = ProductDTO::fromArray($validated);
-        $product = Product::create($dto->toArray());
+            $dto = ProductDTO::fromArray($validated);
+            $product = Product::create($dto->toArray());
 
-        return new ProductResource($product->load(['category', 'unit', 'supplier']));
+            return new ProductResource($product->load(['category', 'unit', 'supplier']));
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(ApiResponse::error('Validation failed', $ve->errors())->toArray(), 422);
+        } catch (\Exception $e) {
+            return response()->json(ApiResponse::error('Error creating product', [$e->getMessage()])->toArray(), 500);
+        }
     }
 
     /**
@@ -101,17 +117,30 @@ class ProductController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\MediaType(
-     *             mediaType="application/json",
-     *             @OA\Schema(ref="#/components/schemas/Product"),
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="type", type="string", enum={"STOCKED","NON_STOCKED"}),
+     *                 @OA\Property(property="category_id", type="integer"),
+     *                 @OA\Property(property="unit_id", type="integer"),
+     *                 @OA\Property(property="supplier_id", type="integer", nullable=true),
+     *                 @OA\Property(property="mrp", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="locked_price", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="cabin_number", type="string", nullable=true),
+     *                 @OA\Property(property="img", type="string", format="binary", nullable=true),
+     *                 @OA\Property(property="color", type="string", nullable=true),
+     *                 @OA\Property(property="barcode", type="string", nullable=true)
+     *             ),
      *             @OA\Examples(
      *                 example="stocked",
      *                 summary="STOCKED product",
-     *                 value={"name":"Sample Product","type":"STOCKED","category_id":1,"unit_id":1,"supplier_id":null,"mrp":100.00,"locked_price":90.00,"barcode":"123456"}
+     *                 value={"name":"Sample Product","type":"STOCKED","category_id":1,"unit_id":1,"supplier_id":null,"mrp":null,"locked_price":null,"barcode":"123456"}
      *             ),
      *             @OA\Examples(
      *                 example="non_stocked",
      *                 summary="NON_STOCKED product",
-     *                 value={"name":"Service Product","type":"NON_STOCKED","category_id":2,"unit_id":1,"supplier_id":null,"mrp":null,"locked_price":null,"barcode":null}
+     *                 value={"name":"Service Product","type":"NON_STOCKED","category_id":2,"unit_id":1,"supplier_id":null,"mrp":100.00,"locked_price":90.00,"barcode":null}
      *             )
      *         )
      *     ),
@@ -151,9 +180,10 @@ class ProductController extends Controller
                 'nullable',
                 'numeric',
                 'min:0',
+                'required_if:type,NON_STOCKED',
                 function ($attribute, $value, $fail) use ($request) {
-                    if (($request->has('type') && $request->input('type') === 'NON_STOCKED') && !is_null($value)) {
-                        $fail('MRP must be null for NON_STOCKED products.');
+                    if ($request->has('type') && $request->input('type') === 'STOCKED' && !is_null($value)) {
+                        $fail('MRP must be null for STOCKED products.');
                     }
                 },
             ],
@@ -161,22 +191,39 @@ class ProductController extends Controller
                 'nullable',
                 'numeric',
                 'min:0',
+                'required_if:type,NON_STOCKED',
                 function ($attribute, $value, $fail) use ($request) {
-                    if (($request->has('type') && $request->input('type') === 'NON_STOCKED') && !is_null($value)) {
-                        $fail('Locked price must be null for NON_STOCKED products.');
+                    if ($request->has('type') && $request->input('type') === 'STOCKED' && !is_null($value)) {
+                        $fail('Locked price must be null for STOCKED products.');
                     }
                 },
             ],
             'cabin_number' => 'nullable|string|max:100',
-            'img' => 'nullable|url',
+            'img' => 'nullable|image|max:2048',
             'color' => 'nullable|string|max:50',
             'barcode' => "nullable|string|max:255|unique:products,barcode,{$id}",
         ]);
+        try {
+            // handle image upload
+            if ($request->hasFile('img')) {
+                $path = $request->file('img')->store('products', 'public');
+                $validated['img'] = Storage::url($path);
+            }
 
-        $dto = ProductDTO::fromArray($validated);
-        $product->update($dto->toArray());
+            if (array_key_exists('type', $validated) && $validated['type'] === 'STOCKED') {
+                $validated['mrp'] = null;
+                $validated['locked_price'] = null;
+            }
 
-        return new ProductResource($product->fresh(['category', 'unit', 'supplier']));
+            $dto = ProductDTO::fromArray($validated, true);
+            $product->update($dto->toArray());
+
+            return new ProductResource($product->fresh(['category', 'unit', 'supplier']));
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(ApiResponse::error('Validation failed', $ve->errors())->toArray(), 422);
+        } catch (\Exception $e) {
+            return response()->json(ApiResponse::error('Error updating product', [$e->getMessage()])->toArray(), 500);
+        }
     }
 
     /**
@@ -185,7 +232,35 @@ class ProductController extends Controller
      *     tags={"Product"},
      *     summary="Update a product",
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/Product")),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="type", type="string", enum={"STOCKED","NON_STOCKED"}),
+     *                 @OA\Property(property="category_id", type="integer"),
+     *                 @OA\Property(property="unit_id", type="integer"),
+     *                 @OA\Property(property="supplier_id", type="integer", nullable=true),
+     *                 @OA\Property(property="mrp", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="locked_price", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="cabin_number", type="string", nullable=true),
+     *                 @OA\Property(property="img", type="string", format="binary", nullable=true),
+     *                 @OA\Property(property="color", type="string", nullable=true),
+     *                 @OA\Property(property="barcode", type="string", nullable=true)
+     *             ),
+     *             @OA\Examples(
+     *                 example="stocked",
+     *                 summary="STOCKED product",
+     *                 value={"name":"Sample Product","type":"STOCKED","category_id":1,"unit_id":1,"supplier_id":null,"mrp":null,"locked_price":null}
+     *             ),
+     *             @OA\Examples(
+     *                 example="non_stocked",
+     *                 summary="NON_STOCKED product",
+     *                 value={"name":"Service Product","type":"NON_STOCKED","category_id":2,"unit_id":1,"supplier_id":null,"mrp":100.00,"locked_price":90.00}
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=200, description="OK"),
      *     @OA\Response(response=422, description="Validation Error")
      * )

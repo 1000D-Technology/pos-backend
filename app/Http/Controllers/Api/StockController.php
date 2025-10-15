@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateStockRequest;
 use App\Http\Resources\StockResource;
 use App\Models\Stock;
+use App\Models\Grn;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
@@ -20,8 +22,6 @@ class StockController extends Controller
     public function index(Request $request)
     {
         $query = Stock::with('product');
-
-        // low stock filter
         if ($request->boolean('low_stock')) {
             $query->whereColumn('qty', '<=', 'qty_limit_alert');
         }
@@ -44,20 +44,38 @@ class StockController extends Controller
 
     public function store(Request $request)
     {
-        // inline validation to allow API-based creation
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'qty' => 'required|numeric|min:0',
-            'max_retail_price' => 'nullable|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
-            'expire_date' => 'nullable|date',
-            'qty_limit_alert' => 'nullable|integer|min:0',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'qty' => 'required|numeric|min:0',
+                'max_retail_price' => 'nullable|numeric|min:0',
+                'cost_price' => 'nullable|numeric|min:0',
+                'manufacture_date' => 'nullable|date',
+                'expire_date' => 'nullable|date',
+                'qty_limit_alert' => 'nullable|integer|min:0',
+                'cost_percentage' => 'nullable|numeric|min:0',
+                'profit_percentage' => 'nullable|numeric|min:0',
+                'discount_percentage' => 'nullable|numeric|min:0',
+                'whole_sale_price' => 'nullable|numeric|min:0',
+                'locked_price' => 'nullable|numeric|min:0',
+            ]);
+
+            DB::beginTransaction();
             $stock = Stock::create($validated);
+
+            Grn::create([
+                'product_id' => $stock->product_id,
+                'stock_id' => $stock->id,
+                'qty' => $stock->qty,
+            ]);
+
+            DB::commit();
+
             return response()->json(ApiResponse::success('Stock created successfully', $stock)->toArray(), 201);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(ApiResponse::error('Validation failed', $ve->errors())->toArray(), 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(ApiResponse::error('Error creating stock', [$e->getMessage()])->toArray(), 500);
         }
     }

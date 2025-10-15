@@ -38,8 +38,7 @@ class ProductDTO
             $attrs['locked_price'] = (float) $attrs['locked_price'];
         }
 
-    // business rule: if NON_STOCKED then clear prices (only when type is explicitly present)
-        if (array_key_exists('type', $attrs) && $attrs['type'] === 'NON_STOCKED') {
+        if (array_key_exists('type', $attrs) && $attrs['type'] === 'STOCKED') {
             $attrs['mrp'] = null;
             $attrs['locked_price'] = null;
         }
