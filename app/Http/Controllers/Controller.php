@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 /**
  * @OA\Info(
  *      version="1.0.0",
@@ -9,11 +10,12 @@ namespace App\Http\Controllers;
  *      @OA\Contact(
  *          email="1000dtechnology.com"
  *      )
- * ),
- *      @OA\Server(
- *          url="http://localhost:8000",
- *          description="Development API Host"
- *      )
+ * )
+ *
+ * @OA\Server(
+ *      url="http://localhost:8000",
+ *      description="Development API Host"
+ * )
  *
  * @OA\Server(
  *      url=L5_SWAGGER_CONST_HOST,

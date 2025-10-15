@@ -7,9 +7,15 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\SupplierPaymentController;
+use App\Http\Controllers\Api\SupplierPaymentDetailsController;
+use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\SalaryController;
+use App\Models\User;
+use App\Http\Controllers\Api\CompanyBankAccountController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\CompanyController;
-use App\Models\User;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -33,10 +39,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
-    Artisan::call('l5-swagger:generate');
-    Artisan::call('migrate:fresh', [
-        '--seed' => true
-    ]);
+//    Artisan::call('l5-swagger:generate');
+//    Artisan::call('migrate:fresh', [
+//        '--seed' => true
+//    ]);
 
     return response()->json([
         'status' => 'success',
@@ -72,6 +78,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
 
+    // Supplier Payment Management
+    Route::get('/supplier-payments', [SupplierPaymentController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments', [SupplierPaymentController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments/{id}', [SupplierPaymentController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}', [SupplierPaymentController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments/{id}', [SupplierPaymentController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
+
+    // Supplier Payment Details Routes
+    Route::get('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
+
 
     // Bank Routes
     Route::get('/banks', [BankController::class, 'index'])->middleware('permission:bank.view');
@@ -97,6 +117,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Salary Routes
+    Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
+    // Salary Payment Routes
+    Route::get('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salary-payments', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'show'])->middleware('permission:salaries.view');
+    Route::delete('/salary-payments/{id}', [\App\Http\Controllers\Api\SalaryPaymentController::class, 'destroy'])->middleware('permission:salaries.create');
+    // Company Bank Account Routes
+    Route::get('/company/bank-accounts', [CompanyBankAccountController::class, 'index'])->middleware('permission:company-bank.view');
+    Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
+    Route::delete('/company/bank-accounts/{id}', [CompanyBankAccountController::class, 'destroy'])->middleware('permission:company-bank.manage');
+
     // Staff Routes
     Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
    
@@ -120,6 +154,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stocks', [\App\Http\Controllers\Api\StockController::class, 'store'])->middleware('permission:stocks.create');
     Route::get('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'show'])->middleware('permission:stocks.view');
     Route::put('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'update'])->middleware('permission:stocks.update');
+
+    // Attendance Management
+    // Admin-managed attendance CRUD. Permission slug: attendances.manage
+    Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
 });
 
 // Public Category Routes

@@ -28,4 +28,11 @@ class Company extends Model
         'name',
         'email',
     ];
+
+    public function banks()
+    {
+        return $this->belongsToMany(Bank::class, 'company_bank')
+            ->withPivot(['id', 'acc_no', 'branch','deleted_at'])
+            ->wherePivotNull('deleted_at');
+    }
 }
