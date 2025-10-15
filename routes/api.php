@@ -7,8 +7,16 @@ use App\Http\Controllers\Api\BankController;
 use App\Http\Controllers\Api\UserPermissionController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
-use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\SupplierPaymentController;
+use App\Http\Controllers\Api\SupplierPaymentDetailsController;
+use App\Http\Controllers\Api\SalaryPaymentController;
+use App\Http\Controllers\Api\SalaryController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\StockController;
+use App\Models\User;
+use App\Http\Controllers\Api\CompanyBankAccountController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -37,6 +45,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('migrate:fresh', [
         '--seed' => true
     ]);
+//    Artisan::call('l5-swagger:generate');
+//    Artisan::call('migrate:fresh', [
+//        '--seed' => true
+//    ]);
 
     return response()->json([
         'status' => 'success',
@@ -59,10 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Unit Management
     Route::get('/units', [UnitController::class, 'index']);
-    Route::post('/units', [UnitController::class, 'store'])->middleware('permission:units.create');
-    Route::get('/units/{id}', [UnitController::class, 'show'])->middleware('permission:units.view');
-    Route::put('/units/{id}', [UnitController::class, 'update'])->middleware('permission:units.update');
-    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->middleware('permission:units.delete');
+    Route::post('/units', [UnitController::class, 'store'])->middleware('permission:units.manage');
+    Route::get('/units/{id}', [UnitController::class, 'show']);
+    Route::put('/units/{id}', [UnitController::class, 'update'])->middleware('permission:units.manage');
+    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->middleware('permission:units.manage');
 
     // Supplier Management
     Route::get('/suppliers/search', [SupplierController::class, 'search'])->middleware('permission:suppliers.view');
@@ -71,6 +83,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/suppliers/{id}', [SupplierController::class, 'show'])->middleware('permission:suppliers.view');
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->middleware('permission:suppliers.update');
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->middleware('permission:suppliers.delete');
+
+    // Supplier Payment Management
+    Route::get('/supplier-payments', [SupplierPaymentController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments', [SupplierPaymentController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments/{id}', [SupplierPaymentController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}', [SupplierPaymentController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments/{id}', [SupplierPaymentController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
+
+    // Supplier Payment Details Routes
+    Route::get('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'index'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments/{id}/details', [SupplierPaymentDetailsController::class, 'store'])->middleware('permission:suppliers.manage-permissions');
+    Route::get('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'show'])->middleware('permission:suppliers-payments.view');
+    Route::post('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'update'])->middleware('permission:suppliers.manage-permissions');
+    Route::delete('/supplier-payments.details/{payment_id}/{detail_id}', [SupplierPaymentDetailsController::class, 'destroy'])->middleware('permission:suppliers.manage-permissions');
 
 
     // Bank Routes
@@ -97,6 +123,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/customers/{id}', [CustomerController::class, 'update'])->middleware('permission:customers.update');
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->middleware('permission:customers.delete');
 
+    // Salary Routes
+    Route::get('/salaries', [SalaryController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salaries', [SalaryController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salaries/{id}', [SalaryController::class, 'show'])->middleware('permission:salaries.view');
+    // Salary Payment Routes
+    Route::get('/salary-payments', [SalaryPaymentController::class, 'index'])->middleware('permission:salaries.view');
+    Route::post('/salary-payments', [SalaryPaymentController::class, 'store'])->middleware('permission:salaries.create');
+    Route::get('/salary-payments/{id}', [SalaryPaymentController::class, 'show'])->middleware('permission:salaries.view');
+    Route::delete('/salary-payments/{id}', [SalaryPaymentController::class, 'destroy'])->middleware('permission:salaries.create');
+    // Company Bank Account Routes
+    Route::get('/company/bank-accounts', [CompanyBankAccountController::class, 'index'])->middleware('permission:company-bank.view');
+    Route::post('/company/bank-accounts', [CompanyBankAccountController::class, 'store'])->middleware('permission:company-bank.manage');
+    Route::delete('/company/bank-accounts/{id}', [CompanyBankAccountController::class, 'destroy'])->middleware('permission:company-bank.manage');
+
     // Staff Routes
     Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
    
@@ -107,6 +147,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
 
+    // Product Routes
+    Route::get('/products', [ProductController::class, 'index'])->middleware('permission:products.view');
+    Route::post('/products', [ProductController::class, 'store'])->middleware('permission:products.create');
+    Route::get('/products/{id}', [ProductController::class, 'show'])->middleware('permission:products.view');
+    Route::put('/products/{id}', [ProductController::class, 'update'])->middleware('permission:products.update');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->middleware('permission:products.delete');
+
+    // Stock Routes
+    Route::get('/stocks/search', [StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::get('/stocks', [StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::post('/stocks', [StockController::class, 'store'])->middleware('permission:stocks.create');
+    Route::get('/stocks/{id}', [StockController::class, 'show'])->middleware('permission:stocks.view');
+    Route::put('/stocks/{id}', [StockController::class, 'update'])->middleware('permission:stocks.update');
+
     // Attendance Management
     // Admin-managed attendance CRUD. Permission slug: attendances.manage
     Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
@@ -116,3 +170,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+// Public Product Routes (search endpoint only - main CRUD requires auth)
+Route::get('/products/search', [ProductController::class, 'index']);
+
