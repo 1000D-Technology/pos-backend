@@ -65,10 +65,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Unit Management
     Route::get('/units', [UnitController::class, 'index']);
-    Route::post('/units', [UnitController::class, 'store'])->middleware('permission:units.create');
-    Route::get('/units/{id}', [UnitController::class, 'show'])->middleware('permission:units.view');
-    Route::put('/units/{id}', [UnitController::class, 'update'])->middleware('permission:units.update');
-    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->middleware('permission:units.delete');
+    Route::post('/units', [UnitController::class, 'store'])->middleware('permission:units.manage');
+    Route::get('/units/{id}', [UnitController::class, 'show']);
+    Route::put('/units/{id}', [UnitController::class, 'update'])->middleware('permission:units.manage');
+    Route::delete('/units/{id}', [UnitController::class, 'destroy'])->middleware('permission:units.manage');
 
     // Supplier Management
     Route::get('/suppliers/search', [SupplierController::class, 'search'])->middleware('permission:suppliers.view');
@@ -141,6 +141,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/company/{id}', [CompanyController::class, 'update'])->middleware('permission:company.manage-permissions');
     Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->middleware('permission:company.manage-permissions');
 
+    // Product Routes
+    Route::get('/products', [\App\Http\Controllers\Api\ProductController::class, 'index'])->middleware('permission:products.view');
+    Route::post('/products', [\App\Http\Controllers\Api\ProductController::class, 'store'])->middleware('permission:products.create');
+    Route::get('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'show'])->middleware('permission:products.view');
+    Route::put('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'update'])->middleware('permission:products.update');
+    Route::delete('/products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'destroy'])->middleware('permission:products.delete');
+
+    // Stock Routes
+    Route::get('/stocks/search', [\App\Http\Controllers\Api\StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::get('/stocks', [\App\Http\Controllers\Api\StockController::class, 'index'])->middleware('permission:stocks.view');
+    Route::post('/stocks', [\App\Http\Controllers\Api\StockController::class, 'store'])->middleware('permission:stocks.create');
+    Route::get('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'show'])->middleware('permission:stocks.view');
+    Route::put('/stocks/{id}', [\App\Http\Controllers\Api\StockController::class, 'update'])->middleware('permission:stocks.update');
 
     // Attendance Management
     // Admin-managed attendance CRUD. Permission slug: attendances.manage
@@ -151,3 +164,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/categories/search', [CategoryController::class, 'search']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+// Public Product Routes (search endpoint only - main CRUD requires auth)
+Route::get('/products/search', [\App\Http\Controllers\Api\ProductController::class, 'index']);
+

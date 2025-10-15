@@ -32,8 +32,14 @@ class PermissionSeeder extends Seeder
             ['name' => 'View Suppliers', 'slug' => 'suppliers.view', 'description' => 'View the list of suppliers.'],
             ['name' => 'Search Suppliers', 'slug' => 'suppliers.search', 'description' => 'Search suppliers in the system.'],
 
+            // Stock Management
+            ['name' => 'Create Stocks', 'slug' => 'stocks.create', 'description' => 'Create new stock entries (used by GRN/Invoices or manual API).'],
+            ['name' => 'View Stocks', 'slug' => 'stocks.view', 'description' => 'View stock levels and details.'],
+            ['name' => 'Update Stocks', 'slug' => 'stocks.update', 'description' => 'Update stock pricing, quantities and expiry details.'],
+            ['name' => 'Search Stocks', 'slug' => 'stocks.search', 'description' => 'Search or filter stock items (e.g., low stock).'],
+
             // Unit Management
-            ['name' => 'Manage Unit', 'slug' => 'unit.manage', 'description' => 'Create/update/delete.'],
+            ['name' => 'Manage Unit', 'slug' => 'units.manage', 'description' => 'Create/update/delete.'],
 
 
 
