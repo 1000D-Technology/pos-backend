@@ -61,4 +61,8 @@ class Stock extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
 }

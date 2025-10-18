@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\SalaryPaymentController;
 use App\Http\Controllers\Api\SalaryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Models\User;
 use App\Http\Controllers\Api\CompanyBankAccountController;
 use App\Http\Controllers\StaffController;
@@ -41,10 +42,10 @@ Route::get('/deploy/fix', function () {
     Artisan::call('config:cache');
     Artisan::call('route:cache');
     Artisan::call('view:cache');
-    Artisan::call('l5-swagger:generate');
-    Artisan::call('migrate:fresh', [
-        '--seed' => true
-    ]);
+//    Artisan::call('l5-swagger:generate');
+//    Artisan::call('migrate:fresh', [
+//        '--seed' => true
+//    ]);
 //    Artisan::call('l5-swagger:generate');
 //    Artisan::call('migrate:fresh', [
 //        '--seed' => true
@@ -139,7 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Staff Routes
     Route::apiResource('staff-roles', StaffController::class)->middleware('permission:staff-roles.manage');
-   
+
     // Company Routes
     Route::get('/company', [CompanyController::class, 'index'])->middleware('permission:company.view');
     Route::post('/company', [CompanyController::class, 'store'])->middleware('permission:company.manage-permissions');
@@ -164,6 +165,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Attendance Management
     // Admin-managed attendance CRUD. Permission slug: attendances.manage
     Route::apiResource('attendances', AttendanceController::class)->middleware('permission:attendances.manage');
+
+    // Invoice Routes
+    Route::get('/invoices', [InvoiceController::class, 'index'])->middleware('permission:invoice.view');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->middleware('permission:invoice.manage-permissions');
 });
 
 // Public Category Routes

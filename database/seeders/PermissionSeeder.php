@@ -84,10 +84,14 @@ class PermissionSeeder extends Seeder
             // Company bank account management
             ['name' => 'Manage Company Bank Accounts', 'slug' => 'company-bank.manage', 'description' => 'Create/Update/Delete company bank accounts.'],
             ['name' => 'View Company Bank Accounts', 'slug' => 'company-bank.view', 'description' => 'View the list of company bank accounts.'],
-            
+
             // Attendance management
             ['name' => 'Manage Attendances', 'slug' => 'attendances.manage', 'description' => 'Create/Update/Delete/View attendances.'],
 
+
+            // Invoice Management
+            ['name' => 'Invoice Permission', 'slug' => 'invoice.manage-permissions', 'description' => 'Add new invoice to the system.'],
+            ['name' => 'View Invoice', 'slug' => 'invoice.view', 'description' => 'view invoice.'],
         ];
 
         foreach ($permissions as $permission) {
