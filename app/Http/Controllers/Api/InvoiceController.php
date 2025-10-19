@@ -24,12 +24,13 @@ use Illuminate\Validation\ValidationException;
  * schema="InvoiceStoreRequest",
  * title="Invoice Creation Request",
  * description="Payload required to create a new Invoice transaction.",
- * required={"customer_id", "payments", "items"},
+ * required={"payments", "items"},
  * @OA\Property(
  * property="customer_id",
  * type="integer",
  * example=1,
- * description="ID of the customer for this invoice."
+ * nullable=true,
+ * description="ID of the customer for this invoice. Nullable for anonymous sales."
  * ),
  * @OA\Property(
  * property="invoice_discount",
@@ -61,6 +62,15 @@ use Illuminate\Validation\ValidationException;
  * @OA\Property(property="discount_rate", type="number", format="float", example=0.05, nullable=true, description="Discount rate (0 to 1) applied to the item.")
  * )
  * )
+ * )
+ *
+ * @OA\Schema(
+ * schema="InvoicePaymentRequest",
+ * title="Invoice Subsequent Payment Request",
+ * description="Payload required to record a payment against an existing invoice.",
+ * required={"payment_method", "total_given_amount"},
+ * @OA\Property(property="payment_method", type="string", enum={"Cash", "Credit Card", "Bank Transfer", "Cheque"}, description="Method of payment."),
+ * @OA\Property(property="total_given_amount", type="number", format="float", example=100.00, description="The amount paid.")
  * )
  */
 class InvoiceController extends Controller
@@ -265,8 +275,32 @@ class InvoiceController extends Controller
 
     }
 
+
     /**
      * Display the specified resource.
+     * @OA\Get(
+     * path="/invoices/{id}",
+     * operationId="getInvoiceById",
+     * tags={"Invoices"},
+     * summary="Get a single Invoice by ID",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * @OA\Schema(type="integer"),
+     * description="ID of the Invoice to retrieve"
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Successful operation",
+     * @OA\JsonContent(
+     * type="object",
+     * @OA\Property(property="message", type="string", example="Invoice Retrieved Successfully"),
+     * @OA\Property(property="data", ref="#/components/schemas/Invoice")
+     * )
+     * ),
+     * @OA\Response(response=404, description="Invoice not found")
+     * )
      */
     public function show(string $id)
     {
@@ -277,6 +311,39 @@ class InvoiceController extends Controller
         return response()->json(ApiResponse::success('Invoice Retrieved Successfully',$invoice)->toArray(),200);
     }
 
+    /**
+     * Record a subsequent payment for an existing invoice.
+     * @OA\Post(
+     * path="/invoices/{id}/payment",
+     * operationId="addInvoicePayment",
+     * tags={"Invoices"},
+     * summary="Record a payment towards an existing invoice balance (Transactional)",
+     * @OA\Parameter(
+     * name="id",
+     * in="path",
+     * required=true,
+     * @OA\Schema(type="integer"),
+     * description="ID of the Invoice to record payment for"
+     * ),
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(ref="#/components/schemas/InvoicePaymentRequest")
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Payment recorded and invoice updated successfully",
+     * @OA\JsonContent(
+     * type="object",
+     * @OA\Property(property="message", type="string", example="Payment recorded and invoice updated successfully"),
+     * @OA\Property(property="data", ref="#/components/schemas/Invoice")
+     * )
+     * ),
+     * @OA\Response(response=400, description="Invoice is already fully paid or payment amount is invalid"),
+     * @OA\Response(response=404, description="Invoice not found"),
+     * @OA\Response(response=422, description="Validation Error"),
+     * @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function addPayment(Request $request, string $id)
     {
         $validator = Validator::make($request->all(),[
