@@ -169,6 +169,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Invoice Routes
     Route::get('/invoices', [InvoiceController::class, 'index'])->middleware('permission:invoice.view');
     Route::post('/invoices', [InvoiceController::class, 'store'])->middleware('permission:invoice.manage-permissions');
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->middleware('permission:invoice.view');
+    Route::post('/invoices/{id}/payment', [InvoiceController::class, 'addPayment'])->middleware('permission:invoice.manage-permissions');
 });
 
 // Public Category Routes

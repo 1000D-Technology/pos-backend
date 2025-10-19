@@ -147,7 +147,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => 'nullable|exists:customers,id',
             'invoice_discount' => 'nullable|numeric|min:0', // Overall invoice discount
             'payments' => 'required|array|min:1',
             'payments.*.payment_method' => ['required', Rule::in(self::ALLOWED_PAYMENT_METHODS)],
@@ -160,7 +160,7 @@ class InvoiceController extends Controller
             'items.*.discount_rate' => 'nullable|numeric|between:0,1',
         ]);
         if($validator->fails()){
-            return response()->json(ApiResponse::error('Validation Error',$validator->errors())->toArray(),422);
+            return response()->json(ApiResponse::error('Validation Error',[$validator->errors()])->toArray(),422);
         }
         $userId = auth()->id();
         if(!$userId){
@@ -270,7 +270,79 @@ class InvoiceController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $invoice = Invoice::with(['customer', 'user', 'items', 'payments'])->find($id);
+        if(!$invoice){
+            return response()->json(ApiResponse::error('Invoice Not Found', ['The requested invoice does not exist.'])->toArray(),404);
+        }
+        return response()->json(ApiResponse::success('Invoice Retrieved Successfully',$invoice)->toArray(),200);
+    }
+
+    public function addPayment(Request $request, string $id)
+    {
+        $validator = Validator::make($request->all(),[
+            'payment_method' => ['required', Rule::in(self::ALLOWED_PAYMENT_METHODS)],
+            'total_given_amount' => 'required|numeric|min:0.01',
+        ]);
+
+        if($validator->fails()){
+            return response()->json(ApiResponse::error('Validation Error', [$validator->errors()])->toArray(),422);
+        }
+
+        $givenAmount = (float) $request->total_given_amount;
+
+        DB::beginTransaction();
+        try{
+            $invoice = Invoice::lockForUpdate()->find($id);
+            if(!$invoice){
+                DB::rollBack();
+                return response()->json(ApiResponse::error('Invoice Not Found', ['The specified invoice does not exist.'])->toArray(),404);
+            }
+            if($invoice->status === 'paid' && $invoice->balance <= 0){
+                DB::rollBack();
+                return response()->json(ApiResponse::error('Invoice Already Paid', ['This invoice is already fully paid.'])->toArray(),400);
+            }
+
+            $currentBalance = (float) $invoice->balance;
+            $paidAmount = $givenAmount;
+
+            if($paidAmount <= 0) {
+                DB::rollBack();
+                return response()->json(ApiResponse::error('Payment Failed', ['Payment amount must be greater than zero.'])->toArray(), 400);
+            }
+            if($paidAmount > $currentBalance){
+                DB::rollBack();
+                return response()->json(ApiResponse::error('Overpayment Not Allowed', ['The payment amount exceeds the current invoice balance.'])->toArray(),400);
+            }
+
+            $newBalance = max(0, $currentBalance - $paidAmount);
+            $newStatus = 'pending';
+            if ($newBalance <= 0) {
+                $newStatus = 'paid';
+            } elseif ($newBalance < $invoice->grand_total) {
+                $newStatus = 'partial_paid';
+            }
+
+            InvoicePayment::create([
+                'invoice_id' => $invoice->id,
+                'payment_method' => $request->payment_method,
+                'total_given_amount' => $paidAmount,
+            ]);
+
+            $invoice->update([
+                'balance' => $newBalance,
+                'status' => $newStatus,
+            ]);
+
+            DB::commit();
+
+            // Update invoice outside transaction for better performance
+            $updatedInvoice = Invoice::with(['customer', 'user', 'items', 'payments'])->find($invoice->id);
+            return response()->json(ApiResponse::success('Payment recorded and invoice updated successfully', [$updatedInvoice])->toArray(), 200);
+
+        }catch (\Exception $e){
+            DB::rollBack();
+            return response()->json(ApiResponse::error('Invoice Payment Failed', [$e->getMessage()])->toArray(),500);
+        }
     }
 
     /**
@@ -278,7 +350,7 @@ class InvoiceController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
     }
 
     /**
